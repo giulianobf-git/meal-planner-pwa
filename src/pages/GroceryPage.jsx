@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useGroceryList } from '@/hooks/useGroceryList';
 import { useGroceryExtras, useAddGroceryExtra, useDeleteGroceryExtra } from '@/hooks/useGroceryExtras';
 import { useIngredients, useCreateIngredient, useUpdateIngredient, useDeleteIngredient, INGREDIENT_CATEGORIES } from '@/hooks/useIngredients';
 import { getDefaultMonday, getWeekDates, prevWeek, nextWeek, formatDate, monthYearLabel } from '@/lib/dates';
 import { ChevronLeft, ChevronRight, ShoppingCart, Check, Plus, Settings, Search, X, Edit2, Trash2 } from 'lucide-react';
 
-// Ordine fisso delle categorie nella lista della spesa
+// Ordine fisso delle categorie
 const CATEGORY_ORDER = [
     'Frutta e verdura',
     'Semi e frutta secca',
@@ -21,6 +21,23 @@ const CATEGORY_ORDER = [
     'Utilities persona',
 ];
 
+/* ─── Toast Component ─── */
+function Toast({ message, onDone }) {
+    useEffect(() => {
+        const t = setTimeout(onDone, 1800);
+        return () => clearTimeout(t);
+    }, [onDone]);
+
+    return (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[70] animate-fade-in">
+            <div className="bg-green-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
+                <Check size={16} />
+                {message}
+            </div>
+        </div>
+    );
+}
+
 export default function GroceryPage() {
     const [monday, setMonday] = useState(() => getDefaultMonday());
     const weekDates = useMemo(() => getWeekDates(monday), [monday]);
@@ -28,6 +45,7 @@ export default function GroceryPage() {
     const { data: groceryMap = {}, isLoading } = useGroceryList(weekDates);
     const { data: extras = [] } = useGroceryExtras(weekStart);
     const [checkedItems, setCheckedItems] = useState({});
+    const [toast, setToast] = useState(null);
 
     // Modals
     const [showManageModal, setShowManageModal] = useState(false);
@@ -37,27 +55,26 @@ export default function GroceryPage() {
         setCheckedItems((prev) => ({ ...prev, [id]: !prev[id] }));
     };
 
+    const showToast = useCallback((msg) => setToast(msg), []);
+    const hideToast = useCallback(() => setToast(null), []);
+
     // Merge recipe items + extras into one map
     const mergedMap = useMemo(() => {
         const map = {};
-        // Copy recipe-derived items
         for (const [cat, items] of Object.entries(groceryMap)) {
             map[cat] = items.map((item) => ({ ...item, isExtra: false }));
         }
-        // Add extras
         for (const extra of extras) {
             const cat = extra.category || 'Altro';
             if (!map[cat]) map[cat] = [];
             map[cat].push(extra);
         }
-        // Sort within categories
         for (const cat in map) {
             map[cat].sort((a, b) => a.name.localeCompare(b.name));
         }
         return map;
     }, [groceryMap, extras]);
 
-    // Ordina le categorie secondo l'ordine fisso
     const categories = CATEGORY_ORDER.filter((cat) => mergedMap[cat]?.length > 0);
     const extraCategories = Object.keys(mergedMap)
         .filter((cat) => !CATEGORY_ORDER.includes(cat) && mergedMap[cat]?.length > 0)
@@ -69,8 +86,15 @@ export default function GroceryPage() {
 
     const deleteExtra = useDeleteGroceryExtra();
 
+    const handleRemoveExtra = (id) => {
+        deleteExtra.mutate(id);
+    };
+
     return (
         <div className="max-w-lg mx-auto px-4 pt-4 pb-4 animate-fade-in">
+            {/* Toast */}
+            {toast && <Toast message={toast} onDone={hideToast} />}
+
             {/* Intestazione */}
             <div className="flex items-center justify-between mb-5">
                 <h1 className="text-xl font-extrabold text-white">Lista della Spesa</h1>
@@ -145,7 +169,6 @@ export default function GroceryPage() {
                 <div className="space-y-4">
                     {allCategories.map((category) => (
                         <div key={category}>
-                            {/* Header categoria */}
                             <div className="flex items-center gap-2 mb-2">
                                 <div className="h-px flex-1 bg-slate-700/50" />
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -154,7 +177,6 @@ export default function GroceryPage() {
                                 <div className="h-px flex-1 bg-slate-700/50" />
                             </div>
 
-                            {/* Articoli */}
                             <div className="space-y-1">
                                 {mergedMap[category].map((item) => {
                                     const itemKey = item.isExtra ? `extra-${item.id}` : item.id;
@@ -162,7 +184,7 @@ export default function GroceryPage() {
                                     return (
                                         <div
                                             key={itemKey}
-                                            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all ${isChecked
+                                            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all ${isChecked
                                                 ? 'bg-green-500/10 border border-green-500/20'
                                                 : 'bg-slate-800/60 border border-slate-700/30'
                                                 }`}
@@ -187,23 +209,13 @@ export default function GroceryPage() {
                                                 )}
                                             </span>
 
-                                            {/* Quantità */}
-                                            {item.totalQuantity || item.quantity ? (
-                                                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isChecked
-                                                    ? 'bg-slate-700/50 text-slate-500'
-                                                    : 'bg-slate-700 text-slate-300'
-                                                    }`}>
-                                                    {item.totalQuantity || item.quantity}
-                                                </span>
-                                            ) : null}
-
-                                            {/* Rimuovi extra */}
+                                            {/* Rimuovi (extra) */}
                                             {item.isExtra && (
                                                 <button
-                                                    onClick={() => deleteExtra.mutate(item.id)}
-                                                    className="p-1 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors flex-shrink-0"
+                                                    onClick={() => handleRemoveExtra(item.id)}
+                                                    className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors flex-shrink-0"
                                                 >
-                                                    <X size={14} />
+                                                    <X size={16} />
                                                 </button>
                                             )}
                                         </div>
@@ -215,14 +227,16 @@ export default function GroceryPage() {
                 </div>
             )}
 
-            {/* Modale Gestisci Ingredienti */}
             {showManageModal && (
                 <ManageIngredientsModal onClose={() => setShowManageModal(false)} />
             )}
 
-            {/* Modale Aggiungi Prodotto */}
             {showAddModal && (
-                <AddProductModal weekStart={weekStart} onClose={() => setShowAddModal(false)} />
+                <AddProductModal
+                    weekStart={weekStart}
+                    onClose={() => setShowAddModal(false)}
+                    onAdded={(name) => showToast(`"${name}" aggiunto!`)}
+                />
             )}
         </div>
     );
@@ -263,7 +277,6 @@ function ManageIngredientsModal({ onClose }) {
                 className="relative w-full max-w-lg bg-slate-800 rounded-t-3xl flex flex-col animate-slide-up"
                 style={{ maxHeight: '85dvh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
-                {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50 flex-shrink-0">
                     <h2 className="text-lg font-bold text-white">Gestisci Prodotti</h2>
                     <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-700 transition-colors">
@@ -271,7 +284,6 @@ function ManageIngredientsModal({ onClose }) {
                     </button>
                 </div>
 
-                {/* Cerca */}
                 <div className="px-5 pt-4 flex-shrink-0">
                     <div className="relative">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -285,7 +297,6 @@ function ManageIngredientsModal({ onClose }) {
                     </div>
                 </div>
 
-                {/* Lista */}
                 <div className="flex-1 overflow-y-auto px-5 py-3 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
                     {ingredients.length === 0 ? (
                         <p className="text-sm text-slate-500 text-center py-8">Nessun prodotto trovato.</p>
@@ -293,7 +304,6 @@ function ManageIngredientsModal({ onClose }) {
                         ingredients.map((ing) => (
                             <div key={ing.id}>
                                 {editingId === ing.id ? (
-                                    /* Modalità modifica */
                                     <div className="bg-slate-700/50 rounded-xl p-3 space-y-2">
                                         <input
                                             type="text"
@@ -328,7 +338,6 @@ function ManageIngredientsModal({ onClose }) {
                                         </div>
                                     </div>
                                 ) : (
-                                    /* Visualizzazione */
                                     <div className="flex items-center gap-2 px-3 py-3 rounded-xl hover:bg-slate-700/30 transition-colors">
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium text-white truncate">{ing.name}</p>
@@ -358,25 +367,26 @@ function ManageIngredientsModal({ onClose }) {
 }
 
 /* ─── Modale Aggiungi Prodotto ─── */
-function AddProductModal({ weekStart, onClose }) {
+function AddProductModal({ weekStart, onClose, onAdded }) {
     const [search, setSearch] = useState('');
     const { data: ingredients = [] } = useIngredients(search);
     const addExtra = useAddGroceryExtra();
     const createIngredient = useCreateIngredient();
 
-    // Crea nuovo prodotto
     const [showCreate, setShowCreate] = useState(false);
     const [newName, setNewName] = useState('');
     const [newCategory, setNewCategory] = useState('Utilities home');
 
     const handleAdd = async (ing) => {
-        await addExtra.mutateAsync({ ingredientId: ing.id, quantity: '', weekStart });
+        await addExtra.mutateAsync({ ingredientId: ing.id, weekStart });
+        onAdded(ing.name);
     };
 
     const handleCreate = async () => {
         if (!newName.trim()) return;
         const newIng = await createIngredient.mutateAsync({ name: newName.trim(), category: newCategory });
-        await addExtra.mutateAsync({ ingredientId: newIng.id, quantity: '', weekStart });
+        await addExtra.mutateAsync({ ingredientId: newIng.id, weekStart });
+        onAdded(newName.trim());
         setShowCreate(false);
         setNewName('');
         setNewCategory('Utilities home');
@@ -389,7 +399,6 @@ function AddProductModal({ weekStart, onClose }) {
                 className="relative w-full max-w-lg bg-slate-800 rounded-t-3xl flex flex-col animate-slide-up"
                 style={{ maxHeight: '85dvh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
-                {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50 flex-shrink-0">
                     <h2 className="text-lg font-bold text-white">Aggiungi alla Spesa</h2>
                     <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-700 transition-colors">
@@ -397,7 +406,6 @@ function AddProductModal({ weekStart, onClose }) {
                     </button>
                 </div>
 
-                {/* Cerca */}
                 <div className="px-5 pt-4 flex-shrink-0">
                     <div className="relative">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -412,7 +420,6 @@ function AddProductModal({ weekStart, onClose }) {
                     </div>
                 </div>
 
-                {/* Lista prodotti */}
                 <div className="flex-1 overflow-y-auto px-5 py-3 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
                     {ingredients.map((ing) => (
                         <button
@@ -431,7 +438,6 @@ function AddProductModal({ weekStart, onClose }) {
                         </button>
                     ))}
 
-                    {/* Crea nuovo */}
                     {search.length > 0 && (
                         <button
                             onClick={() => { setNewName(search); setShowCreate(true); }}
@@ -451,7 +457,6 @@ function AddProductModal({ weekStart, onClose }) {
                     )}
                 </div>
 
-                {/* Form creazione inline */}
                 {showCreate && (
                     <div className="px-5 py-4 border-t border-slate-700/50 flex-shrink-0 space-y-3">
                         <p className="text-xs font-semibold text-slate-400 uppercase">Nuovo Prodotto</p>

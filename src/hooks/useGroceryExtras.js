@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Recupera gli articoli extra (non da ricette) per una settimana.
- * Restituisce gli extras con dati ingrediente (nome, categoria).
  */
 export function useGroceryExtras(weekStart) {
     const { currentUser } = useAuth();
@@ -15,17 +14,16 @@ export function useGroceryExtras(weekStart) {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('grocery_extras')
-                .select('id, quantity, week_start, ingredients(id, name, category)')
+                .select('id, week_start, ingredient_id, ingredients!ingredient_id(id, name, category)')
                 .eq('user_id', userId)
                 .eq('week_start', weekStart);
 
             if (error) throw error;
             return (data || []).map((row) => ({
                 id: row.id,
-                ingredientId: row.ingredients?.id,
+                ingredientId: row.ingredient_id,
                 name: row.ingredients?.name || '',
                 category: row.ingredients?.category || 'Altro',
-                quantity: row.quantity || '',
                 isExtra: true,
             }));
         },
@@ -39,13 +37,12 @@ export function useAddGroceryExtra() {
     const { currentUser } = useAuth();
 
     return useMutation({
-        mutationFn: async ({ ingredientId, quantity, weekStart }) => {
+        mutationFn: async ({ ingredientId, weekStart }) => {
             const { data, error } = await supabase
                 .from('grocery_extras')
                 .insert({
                     user_id: currentUser.id,
                     ingredient_id: ingredientId,
-                    quantity: quantity || '',
                     week_start: weekStart,
                 })
                 .select()
