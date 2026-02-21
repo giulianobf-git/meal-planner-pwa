@@ -74,7 +74,10 @@ export function useAddMeal() {
             if (error) throw error;
             return data;
         },
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['mealPlan'] });
+            qc.invalidateQueries({ queryKey: ['groceryList'] });
+        },
     });
 }
 
@@ -99,7 +102,10 @@ export function useBulkAssignMeals() {
 
             if (error) throw error;
         },
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['mealPlan'] });
+            qc.invalidateQueries({ queryKey: ['groceryList'] });
+        },
     });
 }
 
@@ -115,6 +121,9 @@ export function useRemoveMeal() {
                 .eq('id', mealPlanId);
             if (error) throw error;
         },
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['mealPlan'] });
+            qc.invalidateQueries({ queryKey: ['groceryList'] });
+        },
     });
 }

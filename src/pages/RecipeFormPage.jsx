@@ -209,6 +209,7 @@ export default function RecipeFormPage() {
                                     <span className="text-sm text-slate-300 flex-1 truncate">{ing.name}</span>
                                     <input
                                         type="text"
+                                        inputMode="decimal"
                                         placeholder="Qty (e.g. 2, 200g)"
                                         value={ing.quantity}
                                         onChange={(e) => updateQuantity(index, e.target.value)}

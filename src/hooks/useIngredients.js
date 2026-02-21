@@ -50,7 +50,8 @@ export function useCreateIngredient() {
 }
 
 export const INGREDIENT_CATEGORIES = [
-    'Produce',
+    'Vegetables',
+    'Fruit',
     'Dairy',
     'Meat & Fish',
     'Bakery',

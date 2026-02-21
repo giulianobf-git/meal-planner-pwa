@@ -49,5 +49,5 @@ body,
 
 /* Utility: safe-area-aware bottom padding */
 .pb-safe {
-    padding-bottom: calc(80px + var(--safe-bottom));
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
 }
