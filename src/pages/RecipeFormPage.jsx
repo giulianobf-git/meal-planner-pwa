@@ -16,9 +16,8 @@ export default function RecipeFormPage() {
     const [name, setName] = useState('');
     const [instructions, setInstructions] = useState('');
     const [selectedIngredients, setSelectedIngredients] = useState([]);
-    // Each: { ingredientId, name, category, quantity }
 
-    // Populate form when editing
+    // Popola il form in modalità modifica
     useEffect(() => {
         if (existingRecipe) {
             setName(existingRecipe.name || '');
@@ -34,15 +33,15 @@ export default function RecipeFormPage() {
         }
     }, [existingRecipe]);
 
-    // Ingredient search
+    // Ricerca ingredienti
     const [ingredientSearch, setIngredientSearch] = useState('');
     const { data: searchResults = [] } = useIngredients(ingredientSearch);
     const [showIngredientDropdown, setShowIngredientDropdown] = useState(false);
 
-    // Create new ingredient modal
+    // Modale nuovo ingrediente
     const [showNewIngredientModal, setShowNewIngredientModal] = useState(false);
     const [newIngName, setNewIngName] = useState('');
-    const [newIngCategory, setNewIngCategory] = useState('Other');
+    const [newIngCategory, setNewIngCategory] = useState('Frutta e verdura');
     const createIngredient = useCreateIngredient();
 
     const addIngredient = (ing) => {
@@ -71,7 +70,7 @@ export default function RecipeFormPage() {
         addIngredient(newIng);
         setShowNewIngredientModal(false);
         setNewIngName('');
-        setNewIngCategory('Other');
+        setNewIngCategory('Frutta e verdura');
     };
 
     const handleSubmit = async () => {
@@ -95,14 +94,14 @@ export default function RecipeFormPage() {
 
     const isSaving = createRecipe.isPending || updateRecipe.isPending;
 
-    // Filter out already-selected ingredients from search results
+    // Filtra ingredienti già selezionati
     const filteredResults = searchResults.filter(
         (ing) => !selectedIngredients.find((s) => s.ingredientId === ing.id)
     );
 
     return (
         <div className="max-w-lg mx-auto px-4 pt-4 pb-4 animate-fade-in">
-            {/* Header */}
+            {/* Intestazione */}
             <div className="flex items-center gap-3 mb-6">
                 <button
                     onClick={() => navigate('/recipes')}
@@ -111,32 +110,32 @@ export default function RecipeFormPage() {
                     <ArrowLeft size={18} />
                 </button>
                 <h1 className="text-xl font-extrabold text-white">
-                    {isEditing ? 'Edit Recipe' : 'New Recipe'}
+                    {isEditing ? 'Modifica Ricetta' : 'Nuova Ricetta'}
                 </h1>
             </div>
 
             <div className="space-y-5">
-                {/* Name */}
+                {/* Nome */}
                 <div>
                     <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
-                        Recipe Name
+                        Nome Ricetta
                     </label>
                     <input
                         type="text"
-                        placeholder="e.g. Chicken Salad"
+                        placeholder="es. Insalata di pollo"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         className="w-full px-4 py-3 bg-slate-800 border border-slate-700/50 rounded-2xl text-sm text-white placeholder-slate-500 outline-none focus:border-green-500/50 transition-colors"
                     />
                 </div>
 
-                {/* Instructions */}
+                {/* Istruzioni */}
                 <div>
                     <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
-                        Instructions (optional)
+                        Istruzioni (opzionale)
                     </label>
                     <textarea
-                        placeholder="How to prepare..."
+                        placeholder="Come preparare..."
                         value={instructions}
                         onChange={(e) => setInstructions(e.target.value)}
                         rows={3}
@@ -144,18 +143,18 @@ export default function RecipeFormPage() {
                     />
                 </div>
 
-                {/* Ingredients */}
+                {/* Ingredienti */}
                 <div>
                     <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
-                        Ingredients
+                        Ingredienti
                     </label>
 
-                    {/* Search input */}
+                    {/* Input di ricerca */}
                     <div className="relative mb-3">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input
                             type="text"
-                            placeholder="Search ingredients..."
+                            placeholder="Cerca ingredienti..."
                             value={ingredientSearch}
                             onChange={(e) => {
                                 setIngredientSearch(e.target.value);
@@ -178,7 +177,7 @@ export default function RecipeFormPage() {
                                         <span className="text-[10px] text-slate-400 bg-slate-800/50 px-2 py-0.5 rounded-full">{ing.category}</span>
                                     </button>
                                 ))}
-                                {/* Create new option */}
+                                {/* Opzione crea nuovo */}
                                 <button
                                     onClick={() => {
                                         setNewIngName(ingredientSearch);
@@ -189,19 +188,19 @@ export default function RecipeFormPage() {
                                 >
                                     <Plus size={14} className="text-green-400" />
                                     <span className="text-sm text-green-400 font-medium">
-                                        Create &quot;{ingredientSearch}&quot;
+                                        Crea &quot;{ingredientSearch}&quot;
                                     </span>
                                 </button>
                             </div>
                         )}
                     </div>
 
-                    {/* Close dropdown when clicking outside */}
+                    {/* Chiudi dropdown cliccando fuori */}
                     {showIngredientDropdown && (
                         <div className="fixed inset-0 z-10" onClick={() => setShowIngredientDropdown(false)} />
                     )}
 
-                    {/* Selected ingredients list */}
+                    {/* Lista ingredienti selezionati */}
                     {selectedIngredients.length > 0 && (
                         <div className="space-y-1.5">
                             {selectedIngredients.map((ing, index) => (
@@ -210,7 +209,7 @@ export default function RecipeFormPage() {
                                     <input
                                         type="text"
                                         inputMode="decimal"
-                                        placeholder="Qty (e.g. 2, 200g)"
+                                        placeholder="Qtà (es. 2, 200g)"
                                         value={ing.quantity}
                                         onChange={(e) => updateQuantity(index, e.target.value)}
                                         className="w-28 px-2 py-1.5 bg-slate-700/50 border border-slate-600/50 rounded-lg text-xs text-white placeholder-slate-500 outline-none focus:border-green-500/50"
@@ -227,26 +226,26 @@ export default function RecipeFormPage() {
                     )}
                 </div>
 
-                {/* Save Button */}
+                {/* Pulsante Salva */}
                 <button
                     onClick={handleSubmit}
                     disabled={!name.trim() || isSaving}
                     className="w-full py-3.5 bg-green-500 disabled:bg-slate-700 text-white disabled:text-slate-500 font-bold rounded-2xl transition-all active:scale-[0.98]"
                 >
-                    {isSaving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Recipe'}
+                    {isSaving ? 'Salvataggio...' : isEditing ? 'Salva Modifiche' : 'Crea Ricetta'}
                 </button>
             </div>
 
-            {/* Create New Ingredient Modal */}
+            {/* Modale Nuovo Ingrediente */}
             {showNewIngredientModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowNewIngredientModal(false)} />
                     <div className="relative w-full max-w-sm mx-4 bg-slate-800 rounded-3xl p-5 animate-scale-in">
-                        <h3 className="text-lg font-bold text-white mb-4">New Ingredient</h3>
+                        <h3 className="text-lg font-bold text-white mb-4">Nuovo Ingrediente</h3>
 
                         <div className="space-y-3">
                             <div>
-                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Name</label>
+                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Nome</label>
                                 <input
                                     type="text"
                                     value={newIngName}
@@ -256,7 +255,7 @@ export default function RecipeFormPage() {
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Category</label>
+                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Categoria</label>
                                 <select
                                     value={newIngCategory}
                                     onChange={(e) => setNewIngCategory(e.target.value)}
@@ -274,14 +273,14 @@ export default function RecipeFormPage() {
                                 onClick={() => setShowNewIngredientModal(false)}
                                 className="flex-1 py-2.5 bg-slate-700 text-slate-300 font-semibold rounded-xl transition-all"
                             >
-                                Cancel
+                                Annulla
                             </button>
                             <button
                                 onClick={handleCreateNewIngredient}
                                 disabled={!newIngName.trim() || createIngredient.isPending}
                                 className="flex-1 py-2.5 bg-green-500 disabled:bg-slate-700 text-white font-semibold rounded-xl transition-all active:scale-95"
                             >
-                                {createIngredient.isPending ? 'Creating...' : 'Create'}
+                                {createIngredient.isPending ? 'Creazione...' : 'Crea'}
                             </button>
                         </div>
                     </div>

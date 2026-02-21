@@ -11,7 +11,7 @@ export default defineConfig({
             manifest: {
                 name: 'Meal Planner',
                 short_name: 'MealPrep',
-                description: 'Weekly meal planning and grocery list PWA',
+                description: 'Pianificazione pasti settimanale e lista della spesa',
                 theme_color: '#0f172a',
                 background_color: '#0f172a',
                 display: 'standalone',

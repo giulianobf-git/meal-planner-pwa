@@ -3,19 +3,19 @@ import { CalendarDays, ChefHat, ShoppingCart } from 'lucide-react';
 
 const navItems = [
     { to: '/', icon: CalendarDays, label: 'Planner' },
-    { to: '/recipes', icon: ChefHat, label: 'Recipes' },
-    { to: '/grocery', icon: ShoppingCart, label: 'Grocery' },
+    { to: '/recipes', icon: ChefHat, label: 'Ricette' },
+    { to: '/grocery', icon: ShoppingCart, label: 'Spesa' },
 ];
 
 export default function Layout() {
     return (
         <div className="min-h-screen bg-slate-900 flex flex-col">
-            {/* Main content */}
+            {/* Contenuto principale */}
             <main className="flex-1 pb-safe overflow-auto">
                 <Outlet />
             </main>
 
-            {/* Sticky bottom nav */}
+            {/* Nav fissa in basso */}
             <nav
                 className="fixed bottom-0 left-0 right-0 z-50 bg-slate-800/95 backdrop-blur-lg border-t border-slate-700/50"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
@@ -50,4 +50,3 @@ export default function Layout() {
         </div>
     );
 }
-

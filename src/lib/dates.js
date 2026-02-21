@@ -1,23 +1,23 @@
 /**
  * Date utilities with "Friday Transition" logic.
  *
- * - Mon–Thu: default to current week
- * - Fri–Sun: default to next week (Meal Prep Mode)
+ * - Lun–Gio: default to current week
+ * - Ven–Dom: default to next week (Modalità Meal Prep)
  *
- * A "week" always runs Monday → Sunday.
+ * A "week" always runs Lunedì → Domenica.
  */
 
 /** Get Monday of the week containing `date`. */
 export function getMonday(date) {
     const d = new Date(date);
-    const day = d.getDay(); // 0=Sun, 1=Mon, ...
+    const day = d.getDay(); // 0=Dom, 1=Lun, ...
     const diff = day === 0 ? -6 : 1 - day;
     d.setDate(d.getDate() + diff);
     d.setHours(0, 0, 0, 0);
     return d;
 }
 
-/** Get the 7 dates (Mon–Sun) for the week starting at `monday`. */
+/** Get the 7 dates (Lun–Dom) for the week starting at `monday`. */
 export function getWeekDates(monday) {
     return Array.from({ length: 7 }, (_, i) => {
         const d = new Date(monday);
@@ -29,11 +29,11 @@ export function getWeekDates(monday) {
 /** Get the default week Monday based on the "Friday Transition" rule. */
 export function getDefaultMonday() {
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
-    const isFridayOrLater = dayOfWeek === 0 || dayOfWeek >= 5; // Fri=5, Sat=6, Sun=0
+    const dayOfWeek = today.getDay();
+    const isFridayOrLater = dayOfWeek === 0 || dayOfWeek >= 5;
     const monday = getMonday(today);
     if (isFridayOrLater) {
-        monday.setDate(monday.getDate() + 7); // next week
+        monday.setDate(monday.getDate() + 7);
     }
     return monday;
 }
@@ -60,25 +60,24 @@ export function formatDate(date) {
     return `${y}-${m}-${d}`;
 }
 
-/** Short day label, e.g. "Mon 24". */
+/** Short day label, e.g. "Lun 24". */
 export function shortDayLabel(date) {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
     return `${days[date.getDay()]} ${date.getDate()}`;
 }
 
-/** Full day label, e.g. "Monday". */
+/** Full day label, e.g. "Lunedì". */
 export function fullDayLabel(date) {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const days = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
     return days[date.getDay()];
 }
 
-/** Month-year label, e.g. "February 2026". */
+/** Month-year label, e.g. "Febbraio 2026". */
 export function monthYearLabel(monday) {
     const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December',
+        'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+        'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
     ];
-    // Show the month of the Monday
     return `${months[monday.getMonth()]} ${monday.getFullYear()}`;
 }
 

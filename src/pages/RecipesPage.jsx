@@ -11,7 +11,7 @@ export default function RecipesPage() {
 
     const handleDelete = (e, id) => {
         e.stopPropagation();
-        if (window.confirm('Delete this recipe?')) {
+        if (window.confirm('Eliminare questa ricetta?')) {
             deleteRecipe.mutate(id);
         }
     };
@@ -19,29 +19,29 @@ export default function RecipesPage() {
     return (
         <div className="max-w-lg mx-auto px-4 pt-4 pb-4 animate-fade-in">
             <div className="flex items-center justify-between mb-5">
-                <h1 className="text-xl font-extrabold text-white">Recipes</h1>
+                <h1 className="text-xl font-extrabold text-white">Ricette</h1>
                 <button
                     onClick={() => navigate('/recipes/new')}
                     className="flex items-center gap-1.5 px-4 py-2.5 bg-green-500 text-white font-semibold text-sm rounded-xl transition-all active:scale-95 shadow-lg shadow-green-500/20"
                 >
                     <Plus size={16} />
-                    <span>New</span>
+                    <span>Nuova</span>
                 </button>
             </div>
 
-            {/* Search */}
+            {/* Cerca */}
             <div className="relative mb-4">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                     type="text"
-                    placeholder="Search recipes..."
+                    placeholder="Cerca ricette..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-slate-700/50 rounded-2xl text-sm text-white placeholder-slate-500 outline-none focus:border-green-500/50 transition-colors"
                 />
             </div>
 
-            {/* Loading */}
+            {/* Caricamento */}
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                     <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
@@ -50,7 +50,7 @@ export default function RecipesPage() {
                 <div className="text-center py-16">
                     <ChefHat size={48} className="mx-auto text-slate-600 mb-3" />
                     <p className="text-slate-400 font-medium">
-                        {search ? 'No recipes match your search.' : 'No recipes yet. Create your first!'}
+                        {search ? 'Nessuna ricetta trovata.' : 'Nessuna ricetta. Crea la prima!'}
                     </p>
                 </div>
             ) : (
@@ -74,14 +74,14 @@ export default function RecipesPage() {
                                 <button
                                     onClick={(e) => { e.stopPropagation(); navigate(`/recipes/${recipe.id}/edit`); }}
                                     className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-                                    aria-label="Edit recipe"
+                                    aria-label="Modifica ricetta"
                                 >
                                     <Edit2 size={14} />
                                 </button>
                                 <button
                                     onClick={(e) => handleDelete(e, recipe.id)}
                                     className="p-2 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
-                                    aria-label="Delete recipe"
+                                    aria-label="Elimina ricetta"
                                 >
                                     <Trash2 size={14} />
                                 </button>

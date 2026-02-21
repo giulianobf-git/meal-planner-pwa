@@ -16,7 +16,7 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [checking, setChecking] = useState(false);
 
-    // If already logged in, redirect
+    // Se già loggato, redirect
     if (currentUser) {
         return <Navigate to="/" replace />;
     }
@@ -30,11 +30,11 @@ export default function LoginPage() {
             if (success) {
                 navigate('/', { replace: true });
             } else {
-                setError('Wrong PIN. Try again.');
+                setError('PIN errato. Riprova.');
                 setPin('');
             }
         } catch {
-            setError('Connection error.');
+            setError('Errore di connessione.');
         } finally {
             setChecking(false);
         }
@@ -54,10 +54,10 @@ export default function LoginPage() {
                     <UtensilsCrossed className="text-white" size={28} />
                 </div>
                 <h1 className="text-2xl font-extrabold text-white tracking-tight">Meal Planner</h1>
-                <p className="text-sm text-slate-400 font-medium mt-1">Who&apos;s cooking?</p>
+                <p className="text-sm text-slate-400 font-medium mt-1">Chi cucina oggi?</p>
             </div>
 
-            {/* Player Selection */}
+            {/* Selezione utente */}
             {!selectedUser ? (
                 <div className="w-full max-w-sm space-y-3 animate-slide-up">
                     {PLAYERS.map((player) => (
@@ -71,7 +71,7 @@ export default function LoginPage() {
                             </div>
                             <div className="flex-1">
                                 <p className="font-bold text-lg text-white">{player.name}</p>
-                                <p className="text-xs text-slate-400 font-medium">Tap to sign in</p>
+                                <p className="text-xs text-slate-400 font-medium">Tocca per accedere</p>
                             </div>
                             <ArrowRight size={20} className="text-slate-500 group-hover:text-green-400 transition-colors" />
                         </button>
@@ -79,15 +79,15 @@ export default function LoginPage() {
                 </div>
             ) : (
                 <div className="w-full max-w-sm animate-slide-up">
-                    {/* Selected player */}
+                    {/* Utente selezionato */}
                     <div className="text-center mb-8">
                         <div className={`w-20 h-20 bg-gradient-to-br ${selectedUser.gradient} rounded-2xl flex items-center justify-center text-4xl mx-auto mb-3 shadow-xl`}>
                             {selectedUser.emoji}
                         </div>
-                        <p className="font-bold text-xl text-white">Hey, {selectedUser.name}!</p>
+                        <p className="font-bold text-xl text-white">Ciao, {selectedUser.name}!</p>
                     </div>
 
-                    {/* PIN input */}
+                    {/* Input PIN */}
                     <div className="space-y-4">
                         <div className="relative">
                             <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -116,14 +116,14 @@ export default function LoginPage() {
                             disabled={pin.length !== 4 || checking}
                             className="w-full py-4 bg-green-500 disabled:bg-slate-700 text-white disabled:text-slate-500 font-bold rounded-2xl transition-all active:scale-95"
                         >
-                            {checking ? 'Checking...' : 'Enter'}
+                            {checking ? 'Verifica...' : 'Accedi'}
                         </button>
 
                         <button
                             onClick={() => { setSelectedUser(null); setPin(''); setError(''); }}
                             className="w-full text-center text-sm text-slate-400 font-semibold py-2 hover:text-slate-200 transition-colors"
                         >
-                            ← Switch user
+                            ← Cambia utente
                         </button>
                     </div>
                 </div>

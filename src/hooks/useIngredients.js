@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
-/** Fetch all ingredients for the current user. */
+/** Recupera tutti gli ingredienti dell'utente corrente. */
 export function useIngredients(searchTerm = '') {
     const { currentUser } = useAuth();
     const userId = currentUser?.id;
@@ -28,7 +28,7 @@ export function useIngredients(searchTerm = '') {
     });
 }
 
-/** Create a new ingredient in the global dictionary. */
+/** Crea un nuovo ingrediente nel dizionario globale. */
 export function useCreateIngredient() {
     const qc = useQueryClient();
     const { currentUser } = useAuth();
@@ -37,7 +37,7 @@ export function useCreateIngredient() {
         mutationFn: async ({ name, category }) => {
             const { data, error } = await supabase
                 .from('ingredients')
-                .insert({ user_id: currentUser.id, name, category: category || 'Other' })
+                .insert({ user_id: currentUser.id, name, category: category || 'Altro' })
                 .select()
                 .single();
             if (error) throw error;
@@ -50,16 +50,16 @@ export function useCreateIngredient() {
 }
 
 export const INGREDIENT_CATEGORIES = [
-    'Vegetables',
-    'Fruit',
-    'Dairy',
-    'Meat & Fish',
-    'Bakery',
-    'Pantry',
-    'Frozen',
-    'Beverages',
-    'Spices',
-    'Condiments',
-    'Snacks',
-    'Other',
+    'Frutta e verdura',
+    'Semi e frutta secca',
+    'Legumi e cereali',
+    'Dispensa salata',
+    'Latte e derivati',
+    'Banco frigo',
+    'Carne e pesce',
+    'Dispensa dolce',
+    'Surgelati',
+    'Snack',
+    'Utilities home',
+    'Utilities persona',
 ];
