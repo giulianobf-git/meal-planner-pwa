@@ -34,7 +34,7 @@ export default function BulkAssignModal({ weekDates, onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-[60] flex items-end justify-center">
             {/* Sfondo */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
@@ -42,7 +42,7 @@ export default function BulkAssignModal({ weekDates, onClose }) {
             <div
                 className="relative w-full max-w-lg bg-slate-800 rounded-t-3xl flex flex-col animate-slide-up"
                 style={{
-                    maxHeight: '75dvh',
+                    maxHeight: '85dvh',
                     paddingBottom: 'env(safe-area-inset-bottom, 0px)',
                 }}
             >
