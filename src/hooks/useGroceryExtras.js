@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Recupera gli articoli extra (non da ricette) per una settimana.
+ * Fa due query separate per evitare problemi con FK join di PostgREST.
  */
 export function useGroceryExtras(weekStart) {
     const { currentUser } = useAuth();
@@ -12,18 +13,36 @@ export function useGroceryExtras(weekStart) {
     return useQuery({
         queryKey: ['groceryExtras', userId, weekStart],
         queryFn: async () => {
-            const { data, error } = await supabase
+            // 1. Fetch extras per questa settimana
+            const { data: extras, error: extrasError } = await supabase
                 .from('grocery_extras')
-                .select('id, week_start, ingredient_id, ingredients!ingredient_id(id, name, category)')
+                .select('id, ingredient_id, week_start')
                 .eq('user_id', userId)
                 .eq('week_start', weekStart);
 
-            if (error) throw error;
-            return (data || []).map((row) => ({
+            if (extrasError) throw extrasError;
+            if (!extras || extras.length === 0) return [];
+
+            // 2. Fetch dettagli ingredienti
+            const ingredientIds = [...new Set(extras.map((e) => e.ingredient_id))];
+            const { data: ingredients, error: ingError } = await supabase
+                .from('ingredients')
+                .select('id, name, category')
+                .in('id', ingredientIds);
+
+            if (ingError) throw ingError;
+
+            const ingMap = {};
+            for (const ing of ingredients || []) {
+                ingMap[ing.id] = ing;
+            }
+
+            // 3. Unisci
+            return extras.map((row) => ({
                 id: row.id,
                 ingredientId: row.ingredient_id,
-                name: row.ingredients?.name || '',
-                category: row.ingredients?.category || 'Altro',
+                name: ingMap[row.ingredient_id]?.name || '',
+                category: ingMap[row.ingredient_id]?.category || 'Altro',
                 isExtra: true,
             }));
         },
@@ -45,14 +64,13 @@ export function useAddGroceryExtra() {
                     ingredient_id: ingredientId,
                     week_start: weekStart,
                 })
-                .select()
+                .select('id')
                 .single();
             if (error) throw error;
             return data;
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['groceryExtras'] });
-            qc.invalidateQueries({ queryKey: ['groceryList'] });
         },
     });
 }
@@ -71,7 +89,6 @@ export function useDeleteGroceryExtra() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['groceryExtras'] });
-            qc.invalidateQueries({ queryKey: ['groceryList'] });
         },
     });
 }
