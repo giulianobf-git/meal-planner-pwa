@@ -1,0 +1,145 @@
+import { useState } from 'react';
+import { useBulkAssignMeals } from '@/hooks/useMealPlan';
+import { useRecipes } from '@/hooks/useRecipes';
+import { formatDate, shortDayLabel } from '@/lib/dates';
+import { X, Search, Check, ChefHat } from 'lucide-react';
+
+export default function BulkAssignModal({ weekDates, onClose }) {
+    const [search, setSearch] = useState('');
+    const { data: recipes = [] } = useRecipes(search);
+    const bulkAssign = useBulkAssignMeals();
+    const [selectedRecipe, setSelectedRecipe] = useState(null);
+    const [selectedSlots, setSelectedSlots] = useState({}); // { "2026-02-23|lunch": true }
+
+    const toggleSlot = (date, slot) => {
+        const key = `${formatDate(date)}|${slot}`;
+        setSelectedSlots((prev) => {
+            const next = { ...prev };
+            if (next[key]) delete next[key];
+            else next[key] = true;
+            return next;
+        });
+    };
+
+    const handleAssign = async () => {
+        if (!selectedRecipe || Object.keys(selectedSlots).length === 0) return;
+
+        const assignments = Object.keys(selectedSlots).map((key) => {
+            const [targetDate, slotType] = key.split('|');
+            return { targetDate, slotType };
+        });
+
+        await bulkAssign.mutateAsync({ recipeId: selectedRecipe.id, assignments });
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+
+            {/* Modal */}
+            <div className="relative w-full max-w-lg max-h-[85vh] bg-slate-800 rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col animate-slide-up">
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
+                    <h2 className="text-lg font-bold text-white">Add Meals</h2>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-700 transition-colors">
+                        <X size={18} className="text-slate-400" />
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                    {/* Step 1: Pick a recipe */}
+                    <div>
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                            1. Pick a recipe
+                        </p>
+                        <div className="relative mb-3">
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                            <input
+                                type="text"
+                                placeholder="Search recipes..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-green-500/50"
+                            />
+                        </div>
+
+                        {recipes.length === 0 ? (
+                            <p className="text-sm text-slate-500 text-center py-4">No recipes found. Create one first!</p>
+                        ) : (
+                            <div className="space-y-1 max-h-40 overflow-y-auto">
+                                {recipes.map((recipe) => (
+                                    <button
+                                        key={recipe.id}
+                                        onClick={() => setSelectedRecipe(recipe)}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${selectedRecipe?.id === recipe.id
+                                                ? 'bg-green-500/15 border border-green-500/30'
+                                                : 'bg-slate-700/30 border border-transparent hover:bg-slate-700/60'
+                                            }`}
+                                    >
+                                        <ChefHat size={16} className={selectedRecipe?.id === recipe.id ? 'text-green-400' : 'text-slate-500'} />
+                                        <span className={`text-sm font-medium truncate ${selectedRecipe?.id === recipe.id ? 'text-green-400' : 'text-slate-300'}`}>
+                                            {recipe.name}
+                                        </span>
+                                        {selectedRecipe?.id === recipe.id && (
+                                            <Check size={16} className="text-green-400 ml-auto flex-shrink-0" />
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Step 2: Select day+slot combos */}
+                    {selectedRecipe && (
+                        <div className="animate-fade-in">
+                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                                2. Select days & slots
+                            </p>
+                            <div className="space-y-1.5">
+                                {weekDates.map((date) => {
+                                    const dateStr = formatDate(date);
+                                    return (
+                                        <div key={dateStr} className="flex items-center gap-2">
+                                            <span className="text-xs font-semibold text-slate-400 w-12 flex-shrink-0">
+                                                {shortDayLabel(date)}
+                                            </span>
+                                            {['lunch', 'dinner'].map((slot) => {
+                                                const key = `${dateStr}|${slot}`;
+                                                const checked = Boolean(selectedSlots[key]);
+                                                return (
+                                                    <button
+                                                        key={key}
+                                                        onClick={() => toggleSlot(date, slot)}
+                                                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all ${checked
+                                                                ? 'bg-green-500/20 border border-green-500/40 text-green-400'
+                                                                : 'bg-slate-700/40 border border-slate-600/30 text-slate-400 hover:bg-slate-700/60'
+                                                            }`}
+                                                    >
+                                                        {slot === 'lunch' ? '🌤 Lunch' : '🌙 Dinner'}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="px-5 py-4 border-t border-slate-700/50">
+                    <button
+                        onClick={handleAssign}
+                        disabled={!selectedRecipe || Object.keys(selectedSlots).length === 0 || bulkAssign.isPending}
+                        className="w-full py-3.5 bg-green-500 disabled:bg-slate-700 text-white disabled:text-slate-500 font-bold rounded-2xl transition-all active:scale-[0.98]"
+                    >
+                        {bulkAssign.isPending ? 'Saving...' : `Assign to ${Object.keys(selectedSlots).length} slot(s)`}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
