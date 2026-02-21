@@ -47,6 +47,19 @@ export default function GroceryPage() {
     const [checkedItems, setCheckedItems] = useState({});
     const [toast, setToast] = useState(null);
 
+    // Hidden items (recipe ingredients removed for this week, persisted in localStorage)
+    const hiddenKey = `grocery_hidden_${weekStart}`;
+    const [hiddenItems, setHiddenItems] = useState(() => {
+        try { return JSON.parse(localStorage.getItem(hiddenKey) || '{}'); } catch { return {}; }
+    });
+    useEffect(() => {
+        localStorage.setItem(hiddenKey, JSON.stringify(hiddenItems));
+    }, [hiddenKey, hiddenItems]);
+    // Reset hidden state when week changes
+    useEffect(() => {
+        try { setHiddenItems(JSON.parse(localStorage.getItem(hiddenKey) || '{}')); } catch { setHiddenItems({}); }
+    }, [hiddenKey]);
+
     // Modals
     const [showManageModal, setShowManageModal] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -58,11 +71,25 @@ export default function GroceryPage() {
     const showToast = useCallback((msg) => setToast(msg), []);
     const hideToast = useCallback(() => setToast(null), []);
 
-    // Merge recipe items + extras into one map
+    const deleteExtra = useDeleteGroceryExtra();
+
+    const handleRemoveItem = (item) => {
+        if (item.isExtra) {
+            deleteExtra.mutate(item.id);
+        } else {
+            // Hide recipe item for this week
+            setHiddenItems((prev) => ({ ...prev, [item.id]: true }));
+        }
+    };
+
+    // Merge recipe items + extras into one map, filtering hidden
     const mergedMap = useMemo(() => {
         const map = {};
         for (const [cat, items] of Object.entries(groceryMap)) {
-            map[cat] = items.map((item) => ({ ...item, isExtra: false }));
+            const visible = items.filter((item) => !hiddenItems[item.id]);
+            if (visible.length > 0) {
+                map[cat] = visible.map((item) => ({ ...item, isExtra: false }));
+            }
         }
         for (const extra of extras) {
             const cat = extra.category || 'Altro';
@@ -73,7 +100,7 @@ export default function GroceryPage() {
             map[cat].sort((a, b) => a.name.localeCompare(b.name));
         }
         return map;
-    }, [groceryMap, extras]);
+    }, [groceryMap, extras, hiddenItems]);
 
     const categories = CATEGORY_ORDER.filter((cat) => mergedMap[cat]?.length > 0);
     const extraCategories = Object.keys(mergedMap)
@@ -83,12 +110,6 @@ export default function GroceryPage() {
 
     const totalItems = allCategories.reduce((sum, cat) => sum + (mergedMap[cat]?.length || 0), 0);
     const checkedCount = Object.values(checkedItems).filter(Boolean).length;
-
-    const deleteExtra = useDeleteGroceryExtra();
-
-    const handleRemoveExtra = (id) => {
-        deleteExtra.mutate(id);
-    };
 
     return (
         <div className="max-w-lg mx-auto px-4 pt-4 pb-4 animate-fade-in">
@@ -209,15 +230,13 @@ export default function GroceryPage() {
                                                 )}
                                             </span>
 
-                                            {/* Rimuovi (extra) */}
-                                            {item.isExtra && (
-                                                <button
-                                                    onClick={() => handleRemoveExtra(item.id)}
-                                                    className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors flex-shrink-0"
-                                                >
-                                                    <X size={16} />
-                                                </button>
-                                            )}
+                                            {/* Rimuovi */}
+                                            <button
+                                                onClick={() => handleRemoveItem(item)}
+                                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors flex-shrink-0"
+                                            >
+                                                <X size={16} />
+                                            </button>
                                         </div>
                                     );
                                 })}
