@@ -49,6 +49,49 @@ export function useCreateIngredient() {
     });
 }
 
+/** Modifica nome e/o categoria di un ingrediente. */
+export function useUpdateIngredient() {
+    const qc = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, name, category }) => {
+            const updates = {};
+            if (name !== undefined) updates.name = name;
+            if (category !== undefined) updates.category = category;
+            const { error } = await supabase
+                .from('ingredients')
+                .update(updates)
+                .eq('id', id);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['ingredients'] });
+            qc.invalidateQueries({ queryKey: ['groceryList'] });
+            qc.invalidateQueries({ queryKey: ['groceryExtras'] });
+        },
+    });
+}
+
+/** Elimina un ingrediente dal dizionario. */
+export function useDeleteIngredient() {
+    const qc = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id) => {
+            const { error } = await supabase
+                .from('ingredients')
+                .delete()
+                .eq('id', id);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['ingredients'] });
+            qc.invalidateQueries({ queryKey: ['groceryList'] });
+            qc.invalidateQueries({ queryKey: ['groceryExtras'] });
+        },
+    });
+}
+
 export const INGREDIENT_CATEGORIES = [
     'Frutta e verdura',
     'Semi e frutta secca',

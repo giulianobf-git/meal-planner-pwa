@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useGroceryList } from '@/hooks/useGroceryList';
+import { useGroceryExtras, useAddGroceryExtra, useDeleteGroceryExtra } from '@/hooks/useGroceryExtras';
+import { useIngredients, useCreateIngredient, useUpdateIngredient, useDeleteIngredient, INGREDIENT_CATEGORIES } from '@/hooks/useIngredients';
 import { getDefaultMonday, getWeekDates, prevWeek, nextWeek, formatDate, monthYearLabel } from '@/lib/dates';
-import { ChevronLeft, ChevronRight, ShoppingCart, Check, Plus } from 'lucide-react';
-import { useCreateIngredient, INGREDIENT_CATEGORIES } from '@/hooks/useIngredients';
+import { ChevronLeft, ChevronRight, ShoppingCart, Check, Plus, Settings, Search, X, Edit2, Trash2 } from 'lucide-react';
 
 // Ordine fisso delle categorie nella lista della spesa
 const CATEGORY_ORDER = [
@@ -23,50 +24,72 @@ const CATEGORY_ORDER = [
 export default function GroceryPage() {
     const [monday, setMonday] = useState(() => getDefaultMonday());
     const weekDates = useMemo(() => getWeekDates(monday), [monday]);
+    const weekStart = formatDate(weekDates[0]);
     const { data: groceryMap = {}, isLoading } = useGroceryList(weekDates);
+    const { data: extras = [] } = useGroceryExtras(weekStart);
     const [checkedItems, setCheckedItems] = useState({});
 
-    // Crea ingrediente al volo dalla vista spesa
-    const [showNewIngModal, setShowNewIngModal] = useState(false);
-    const [newIngName, setNewIngName] = useState('');
-    const [newIngCategory, setNewIngCategory] = useState('Frutta e verdura');
-    const createIngredient = useCreateIngredient();
+    // Modals
+    const [showManageModal, setShowManageModal] = useState(false);
+    const [showAddModal, setShowAddModal] = useState(false);
 
     const toggleItem = (id) => {
         setCheckedItems((prev) => ({ ...prev, [id]: !prev[id] }));
     };
 
+    // Merge recipe items + extras into one map
+    const mergedMap = useMemo(() => {
+        const map = {};
+        // Copy recipe-derived items
+        for (const [cat, items] of Object.entries(groceryMap)) {
+            map[cat] = items.map((item) => ({ ...item, isExtra: false }));
+        }
+        // Add extras
+        for (const extra of extras) {
+            const cat = extra.category || 'Altro';
+            if (!map[cat]) map[cat] = [];
+            map[cat].push(extra);
+        }
+        // Sort within categories
+        for (const cat in map) {
+            map[cat].sort((a, b) => a.name.localeCompare(b.name));
+        }
+        return map;
+    }, [groceryMap, extras]);
+
     // Ordina le categorie secondo l'ordine fisso
-    const categories = CATEGORY_ORDER.filter((cat) => groceryMap[cat]?.length > 0);
-    // Aggiungi eventuali categorie non previste nell'ordine
-    const extraCategories = Object.keys(groceryMap)
-        .filter((cat) => !CATEGORY_ORDER.includes(cat) && groceryMap[cat]?.length > 0)
+    const categories = CATEGORY_ORDER.filter((cat) => mergedMap[cat]?.length > 0);
+    const extraCategories = Object.keys(mergedMap)
+        .filter((cat) => !CATEGORY_ORDER.includes(cat) && mergedMap[cat]?.length > 0)
         .sort();
     const allCategories = [...categories, ...extraCategories];
 
-    const totalItems = allCategories.reduce((sum, cat) => sum + (groceryMap[cat]?.length || 0), 0);
+    const totalItems = allCategories.reduce((sum, cat) => sum + (mergedMap[cat]?.length || 0), 0);
     const checkedCount = Object.values(checkedItems).filter(Boolean).length;
 
-    const handleCreateIngredient = async () => {
-        if (!newIngName.trim()) return;
-        await createIngredient.mutateAsync({ name: newIngName.trim(), category: newIngCategory });
-        setShowNewIngModal(false);
-        setNewIngName('');
-        setNewIngCategory('Frutta e verdura');
-    };
+    const deleteExtra = useDeleteGroceryExtra();
 
     return (
         <div className="max-w-lg mx-auto px-4 pt-4 pb-4 animate-fade-in">
             {/* Intestazione */}
             <div className="flex items-center justify-between mb-5">
                 <h1 className="text-xl font-extrabold text-white">Lista della Spesa</h1>
-                <button
-                    onClick={() => setShowNewIngModal(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 text-slate-300 hover:text-white font-semibold text-xs rounded-xl transition-all"
-                >
-                    <Plus size={14} />
-                    <span>Ingrediente</span>
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowManageModal(true)}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 text-slate-300 hover:text-white font-semibold text-xs rounded-xl transition-all"
+                    >
+                        <Settings size={14} />
+                        <span>Gestisci</span>
+                    </button>
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-green-500/15 border border-green-500/30 text-green-400 hover:bg-green-500/25 font-semibold text-xs rounded-xl transition-all"
+                    >
+                        <Plus size={14} />
+                        <span>Aggiungi</span>
+                    </button>
+                </div>
             </div>
 
             {/* Navigazione settimana */}
@@ -116,7 +139,7 @@ export default function GroceryPage() {
                 <div className="text-center py-16">
                     <ShoppingCart size={48} className="mx-auto text-slate-600 mb-3" />
                     <p className="text-slate-400 font-medium">Nessun articolo.</p>
-                    <p className="text-xs text-slate-500 mt-1">Assegna ricette al planner per generare la lista.</p>
+                    <p className="text-xs text-slate-500 mt-1">Assegna ricette al planner o aggiungi prodotti manualmente.</p>
                 </div>
             ) : (
                 <div className="space-y-4">
@@ -133,39 +156,57 @@ export default function GroceryPage() {
 
                             {/* Articoli */}
                             <div className="space-y-1">
-                                {groceryMap[category].map((item) => {
-                                    const isChecked = checkedItems[item.id];
+                                {mergedMap[category].map((item) => {
+                                    const itemKey = item.isExtra ? `extra-${item.id}` : item.id;
+                                    const isChecked = checkedItems[itemKey];
                                     return (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => toggleItem(item.id)}
-                                            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all active:scale-[0.99] ${isChecked
+                                        <div
+                                            key={itemKey}
+                                            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all ${isChecked
                                                 ? 'bg-green-500/10 border border-green-500/20'
-                                                : 'bg-slate-800/60 border border-slate-700/30 hover:bg-slate-800'
+                                                : 'bg-slate-800/60 border border-slate-700/30'
                                                 }`}
                                         >
                                             {/* Checkbox */}
-                                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${isChecked ? 'bg-green-500 border-green-500' : 'border-slate-600'
-                                                }`}>
+                                            <button
+                                                onClick={() => toggleItem(itemKey)}
+                                                className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${isChecked ? 'bg-green-500 border-green-500' : 'border-slate-600'
+                                                    }`}
+                                            >
                                                 {isChecked && <Check size={14} className="text-white" />}
-                                            </div>
+                                            </button>
 
                                             {/* Nome */}
                                             <span className={`text-sm font-medium flex-1 transition-all ${isChecked ? 'text-slate-500 line-through' : 'text-white'
                                                 }`}>
                                                 {item.name}
+                                                {item.isExtra && (
+                                                    <span className="ml-1.5 text-[9px] font-bold text-amber-400/70 bg-amber-400/10 px-1.5 py-0.5 rounded-full align-middle">
+                                                        +
+                                                    </span>
+                                                )}
                                             </span>
 
                                             {/* Quantità */}
-                                            {item.totalQuantity && (
+                                            {item.totalQuantity || item.quantity ? (
                                                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isChecked
                                                     ? 'bg-slate-700/50 text-slate-500'
                                                     : 'bg-slate-700 text-slate-300'
                                                     }`}>
-                                                    {item.totalQuantity}
+                                                    {item.totalQuantity || item.quantity}
                                                 </span>
+                                            ) : null}
+
+                                            {/* Rimuovi extra */}
+                                            {item.isExtra && (
+                                                <button
+                                                    onClick={() => deleteExtra.mutate(item.id)}
+                                                    className="p-1 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors flex-shrink-0"
+                                                >
+                                                    <X size={14} />
+                                                </button>
                                             )}
-                                        </button>
+                                        </div>
                                     );
                                 })}
                             </div>
@@ -174,54 +215,280 @@ export default function GroceryPage() {
                 </div>
             )}
 
-            {/* Modale Nuovo Ingrediente */}
-            {showNewIngModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowNewIngModal(false)} />
-                    <div className="relative w-full max-w-sm mx-4 bg-slate-800 rounded-3xl p-5 animate-scale-in">
-                        <h3 className="text-lg font-bold text-white mb-4">Nuovo Ingrediente</h3>
-                        <div className="space-y-3">
-                            <div>
-                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Nome</label>
-                                <input
-                                    type="text"
-                                    value={newIngName}
-                                    onChange={(e) => setNewIngName(e.target.value)}
-                                    className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-sm text-white outline-none focus:border-green-500/50"
-                                    autoFocus
-                                />
+            {/* Modale Gestisci Ingredienti */}
+            {showManageModal && (
+                <ManageIngredientsModal onClose={() => setShowManageModal(false)} />
+            )}
+
+            {/* Modale Aggiungi Prodotto */}
+            {showAddModal && (
+                <AddProductModal weekStart={weekStart} onClose={() => setShowAddModal(false)} />
+            )}
+        </div>
+    );
+}
+
+/* ─── Modale Gestisci Ingredienti ─── */
+function ManageIngredientsModal({ onClose }) {
+    const [search, setSearch] = useState('');
+    const { data: ingredients = [] } = useIngredients(search);
+    const updateIngredient = useUpdateIngredient();
+    const deleteIngredient = useDeleteIngredient();
+    const [editingId, setEditingId] = useState(null);
+    const [editName, setEditName] = useState('');
+    const [editCategory, setEditCategory] = useState('');
+
+    const startEdit = (ing) => {
+        setEditingId(ing.id);
+        setEditName(ing.name);
+        setEditCategory(ing.category);
+    };
+
+    const saveEdit = async () => {
+        if (!editName.trim()) return;
+        await updateIngredient.mutateAsync({ id: editingId, name: editName.trim(), category: editCategory });
+        setEditingId(null);
+    };
+
+    const handleDelete = (ing) => {
+        if (window.confirm(`Eliminare "${ing.name}"?`)) {
+            deleteIngredient.mutate(ing.id);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div
+                className="relative w-full max-w-lg bg-slate-800 rounded-t-3xl flex flex-col animate-slide-up"
+                style={{ maxHeight: '85dvh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50 flex-shrink-0">
+                    <h2 className="text-lg font-bold text-white">Gestisci Prodotti</h2>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-700 transition-colors">
+                        <X size={18} className="text-slate-400" />
+                    </button>
+                </div>
+
+                {/* Cerca */}
+                <div className="px-5 pt-4 flex-shrink-0">
+                    <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <input
+                            type="text"
+                            placeholder="Cerca prodotti..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-green-500/50"
+                        />
+                    </div>
+                </div>
+
+                {/* Lista */}
+                <div className="flex-1 overflow-y-auto px-5 py-3 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    {ingredients.length === 0 ? (
+                        <p className="text-sm text-slate-500 text-center py-8">Nessun prodotto trovato.</p>
+                    ) : (
+                        ingredients.map((ing) => (
+                            <div key={ing.id}>
+                                {editingId === ing.id ? (
+                                    /* Modalità modifica */
+                                    <div className="bg-slate-700/50 rounded-xl p-3 space-y-2">
+                                        <input
+                                            type="text"
+                                            value={editName}
+                                            onChange={(e) => setEditName(e.target.value)}
+                                            className="w-full px-3 py-2 bg-slate-600/50 border border-slate-500/50 rounded-lg text-sm text-white outline-none focus:border-green-500/50"
+                                            autoFocus
+                                        />
+                                        <select
+                                            value={editCategory}
+                                            onChange={(e) => setEditCategory(e.target.value)}
+                                            className="w-full px-3 py-2 bg-slate-600/50 border border-slate-500/50 rounded-lg text-sm text-white outline-none appearance-none"
+                                        >
+                                            {INGREDIENT_CATEGORIES.map((cat) => (
+                                                <option key={cat} value={cat}>{cat}</option>
+                                            ))}
+                                        </select>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setEditingId(null)}
+                                                className="flex-1 py-2 bg-slate-600 text-slate-300 font-semibold text-xs rounded-lg"
+                                            >
+                                                Annulla
+                                            </button>
+                                            <button
+                                                onClick={saveEdit}
+                                                disabled={!editName.trim() || updateIngredient.isPending}
+                                                className="flex-1 py-2 bg-green-500 disabled:bg-slate-600 text-white font-semibold text-xs rounded-lg"
+                                            >
+                                                {updateIngredient.isPending ? 'Salvataggio...' : 'Salva'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Visualizzazione */
+                                    <div className="flex items-center gap-2 px-3 py-3 rounded-xl hover:bg-slate-700/30 transition-colors">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-white truncate">{ing.name}</p>
+                                            <p className="text-[10px] text-slate-500 font-medium">{ing.category}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => startEdit(ing)}
+                                            className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                                        >
+                                            <Edit2 size={14} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(ing)}
+                                            className="p-2 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                            <div>
-                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Categoria</label>
-                                <select
-                                    value={newIngCategory}
-                                    onChange={(e) => setNewIngCategory(e.target.value)}
-                                    className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-sm text-white outline-none focus:border-green-500/50 appearance-none"
-                                >
-                                    {INGREDIENT_CATEGORIES.map((cat) => (
-                                        <option key={cat} value={cat}>{cat}</option>
-                                    ))}
-                                </select>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ─── Modale Aggiungi Prodotto ─── */
+function AddProductModal({ weekStart, onClose }) {
+    const [search, setSearch] = useState('');
+    const { data: ingredients = [] } = useIngredients(search);
+    const addExtra = useAddGroceryExtra();
+    const createIngredient = useCreateIngredient();
+
+    // Crea nuovo prodotto
+    const [showCreate, setShowCreate] = useState(false);
+    const [newName, setNewName] = useState('');
+    const [newCategory, setNewCategory] = useState('Utilities home');
+
+    const handleAdd = async (ing) => {
+        await addExtra.mutateAsync({ ingredientId: ing.id, quantity: '', weekStart });
+    };
+
+    const handleCreate = async () => {
+        if (!newName.trim()) return;
+        const newIng = await createIngredient.mutateAsync({ name: newName.trim(), category: newCategory });
+        await addExtra.mutateAsync({ ingredientId: newIng.id, quantity: '', weekStart });
+        setShowCreate(false);
+        setNewName('');
+        setNewCategory('Utilities home');
+    };
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div
+                className="relative w-full max-w-lg bg-slate-800 rounded-t-3xl flex flex-col animate-slide-up"
+                style={{ maxHeight: '85dvh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50 flex-shrink-0">
+                    <h2 className="text-lg font-bold text-white">Aggiungi alla Spesa</h2>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-700 transition-colors">
+                        <X size={18} className="text-slate-400" />
+                    </button>
+                </div>
+
+                {/* Cerca */}
+                <div className="px-5 pt-4 flex-shrink-0">
+                    <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <input
+                            type="text"
+                            placeholder="Cerca prodotti..."
+                            value={search}
+                            onChange={(e) => { setSearch(e.target.value); setShowCreate(false); }}
+                            className="w-full pl-9 pr-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-green-500/50"
+                            autoFocus
+                        />
+                    </div>
+                </div>
+
+                {/* Lista prodotti */}
+                <div className="flex-1 overflow-y-auto px-5 py-3 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    {ingredients.map((ing) => (
+                        <button
+                            key={ing.id}
+                            onClick={() => handleAdd(ing)}
+                            disabled={addExtra.isPending}
+                            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-slate-700/50 transition-colors active:scale-[0.99]"
+                        >
+                            <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Plus size={14} className="text-green-400" />
                             </div>
-                        </div>
-                        <div className="flex gap-2 mt-5">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-white truncate">{ing.name}</p>
+                                <p className="text-[10px] text-slate-500 font-medium">{ing.category}</p>
+                            </div>
+                        </button>
+                    ))}
+
+                    {/* Crea nuovo */}
+                    {search.length > 0 && (
+                        <button
+                            onClick={() => { setNewName(search); setShowCreate(true); }}
+                            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-green-500/10 transition-colors border border-dashed border-green-500/30 mt-2"
+                        >
+                            <div className="w-8 h-8 bg-green-500/15 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Plus size={14} className="text-green-400" />
+                            </div>
+                            <span className="text-sm font-medium text-green-400">
+                                Crea &quot;{search}&quot; e aggiungi
+                            </span>
+                        </button>
+                    )}
+
+                    {ingredients.length === 0 && !search && (
+                        <p className="text-sm text-slate-500 text-center py-8">Cerca un prodotto o creane uno nuovo.</p>
+                    )}
+                </div>
+
+                {/* Form creazione inline */}
+                {showCreate && (
+                    <div className="px-5 py-4 border-t border-slate-700/50 flex-shrink-0 space-y-3">
+                        <p className="text-xs font-semibold text-slate-400 uppercase">Nuovo Prodotto</p>
+                        <input
+                            type="text"
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-sm text-white outline-none focus:border-green-500/50"
+                            placeholder="Nome prodotto"
+                        />
+                        <select
+                            value={newCategory}
+                            onChange={(e) => setNewCategory(e.target.value)}
+                            className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-sm text-white outline-none appearance-none"
+                        >
+                            {INGREDIENT_CATEGORIES.map((cat) => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                        </select>
+                        <div className="flex gap-2">
                             <button
-                                onClick={() => setShowNewIngModal(false)}
-                                className="flex-1 py-2.5 bg-slate-700 text-slate-300 font-semibold rounded-xl transition-all"
+                                onClick={() => setShowCreate(false)}
+                                className="flex-1 py-2.5 bg-slate-700 text-slate-300 font-semibold rounded-xl"
                             >
                                 Annulla
                             </button>
                             <button
-                                onClick={handleCreateIngredient}
-                                disabled={!newIngName.trim() || createIngredient.isPending}
-                                className="flex-1 py-2.5 bg-green-500 disabled:bg-slate-700 text-white font-semibold rounded-xl transition-all active:scale-95"
+                                onClick={handleCreate}
+                                disabled={!newName.trim() || createIngredient.isPending || addExtra.isPending}
+                                className="flex-1 py-2.5 bg-green-500 disabled:bg-slate-700 text-white font-semibold rounded-xl active:scale-95"
                             >
-                                {createIngredient.isPending ? 'Creazione...' : 'Crea'}
+                                {createIngredient.isPending ? 'Creazione...' : 'Crea e Aggiungi'}
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }
