@@ -63,3 +63,15 @@ create index if not exists idx_ingredients_user on ingredients(user_id);
 create index if not exists idx_recipes_user on recipes(user_id);
 create index if not exists idx_meal_plan_user_date on meal_plan(user_id, target_date);
 create index if not exists idx_recipe_ingredients_recipe on recipe_ingredients(recipe_id);
+
+-- 6. GROCERY EXTRAS (manual items added per week)
+create table if not exists grocery_extras (
+  id            uuid default gen_random_uuid() primary key,
+  user_id       text not null,
+  ingredient_id uuid not null references ingredients(id) on delete cascade,
+  week_start    date not null,
+  created_at    timestamptz default now()
+);
+
+alter table grocery_extras disable row level security;
+create index if not exists idx_grocery_extras_user_week on grocery_extras(user_id, week_start);
