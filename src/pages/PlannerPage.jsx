@@ -104,7 +104,7 @@ export default function PlannerPage() {
             <div className="flex gap-2 mb-4">
                 <button
                     onClick={() => setShowBulkModal(true)}
-                    className="flex-1 py-3 flex items-center justify-center gap-2 bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 text-green-400 font-semibold rounded-2xl transition-all active:scale-[0.98]"
+                    className="flex-1 py-3 flex items-center justify-center gap-2 bg-green-500/10 border border-green-500/40 hover:bg-green-500/20 text-green-400 font-semibold rounded-2xl transition-all active:scale-[0.98]"
                 >
                     <Plus size={18} />
                     <span>Aggiungi Pasti</span>
@@ -112,7 +112,7 @@ export default function PlannerPage() {
                 <button
                     onClick={handleCopyPrevWeek}
                     disabled={copyPrevWeek.isPending}
-                    className="py-3 px-4 flex items-center justify-center gap-2 bg-slate-800 border border-slate-700/30 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold rounded-2xl transition-all active:scale-[0.98] disabled:opacity-50"
+                    className="py-3 px-4 flex items-center justify-center gap-2 bg-slate-800 border border-slate-600/50 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold rounded-2xl transition-all active:scale-[0.98] disabled:opacity-50"
                     title="Copia settimana precedente"
                 >
                     <Copy size={16} />
@@ -136,12 +136,12 @@ export default function PlannerPage() {
                             <div
                                 key={key}
                                 className={`rounded-2xl border transition-all ${todayFlag
-                                    ? 'bg-green-500/5 border-green-500/20'
-                                    : 'bg-slate-800/50 border-slate-700/30'
+                                    ? 'bg-green-500/5 border-green-500/40'
+                                    : 'bg-slate-800/50 border-slate-600/50'
                                     }`}
                             >
                                 {/* Header giorno */}
-                                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-700/30">
+                                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-600/40">
                                     <span className={`text-sm font-bold ${todayFlag ? 'text-green-400' : 'text-white'}`}>
                                         {shortDayLabel(date)}
                                     </span>
