@@ -34,16 +34,15 @@ export default function BulkAssignModal({ weekDates, onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-start justify-center pt-[8dvh]">
+        <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: '100vh' }}>
             {/* Sfondo */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-            {/* Modale — pinned to top to avoid iOS keyboard viewport jumps */}
+            {/* Modale — full-screen fixed, immune to iOS keyboard viewport changes */}
             <div
-                className="relative w-full max-w-lg bg-slate-800 rounded-3xl flex flex-col animate-fade-in mx-4"
+                className="absolute top-0 left-0 right-0 bottom-0 flex flex-col bg-slate-800"
                 style={{
-                    maxHeight: '80dvh',
-                    height: 'auto',
+                    paddingTop: 'env(safe-area-inset-top, 0px)',
                     paddingBottom: 'env(safe-area-inset-bottom, 0px)',
                 }}
             >
