@@ -115,7 +115,7 @@ export default function BulkAssignModal({ weekDates, onClose }) {
                                             <span className="text-xs font-semibold text-slate-400 w-12 flex-shrink-0">
                                                 {shortDayLabel(date)}
                                             </span>
-                                            {['lunch', 'dinner'].map((slot) => {
+                                            {['breakfast', 'lunch', 'dinner'].map((slot) => {
                                                 const key = `${dateStr}|${slot}`;
                                                 const checked = Boolean(selectedSlots[key]);
                                                 return (
@@ -127,7 +127,7 @@ export default function BulkAssignModal({ weekDates, onClose }) {
                                                             : 'bg-slate-700/40 border border-slate-500/40 text-slate-400 hover:bg-slate-700/60'
                                                             }`}
                                                     >
-                                                        {slot === 'lunch' ? '🌤 Pranzo' : '🌙 Cena'}
+                                                        {slot === 'breakfast' ? '☀️ Colaz.' : slot === 'lunch' ? '🌤 Pranzo' : '🌙 Cena'}
                                                     </button>
                                                 );
                                             })}

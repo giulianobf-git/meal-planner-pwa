@@ -129,7 +129,7 @@ export default function PlannerPage() {
                 <div className="space-y-2">
                     {weekDates.map((date) => {
                         const key = formatDate(date);
-                        const dayMeals = mealPlan?.[key] || { lunch: null, dinner: null };
+                        const dayMeals = mealPlan?.[key] || { breakfast: null, lunch: null, dinner: null };
                         const todayFlag = isToday(date);
 
                         return (
@@ -154,12 +154,13 @@ export default function PlannerPage() {
 
                                 {/* Slot */}
                                 <div className="divide-y divide-slate-700/20">
-                                    {['lunch', 'dinner'].map((slot) => {
+                                    {['breakfast', 'lunch', 'dinner'].map((slot) => {
                                         const meal = dayMeals[slot];
+                                        const slotLabel = slot === 'breakfast' ? '☀️ Colaz.' : slot === 'lunch' ? '🌤 Pranzo' : '🌙 Cena';
                                         return (
                                             <div key={slot} className="flex items-center px-4 py-2.5 min-h-[44px]">
                                                 <span className="text-[11px] font-semibold text-slate-500 uppercase w-14 flex-shrink-0">
-                                                    {slot === 'lunch' ? '🌤 Pranzo' : '🌙 Cena'}
+                                                    {slotLabel}
                                                 </span>
                                                 {meal ? (
                                                     <div className="flex items-center flex-1 min-w-0 ml-2">

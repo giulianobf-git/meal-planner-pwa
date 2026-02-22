@@ -36,7 +36,7 @@ export function useMealPlan(weekDates) {
             const map = {};
             for (const date of weekDates) {
                 const key = formatDate(date);
-                map[key] = { lunch: null, dinner: null };
+                map[key] = { breakfast: null, lunch: null, dinner: null };
             }
             for (const row of data || []) {
                 const key = row.target_date;
