@@ -55,7 +55,7 @@ create table if not exists meal_plan (
   target_date date not null,
   slot_type   text not null check (slot_type in ('lunch', 'dinner')),
   created_at  timestamptz default now(),
-  unique (user_id, target_date, slot_type)
+  unique (target_date, slot_type)
 );
 
 -- Indexes for performance

@@ -5,7 +5,7 @@ import { formatDate } from '@/lib/dates';
 
 /**
  * Derive an aggregated, categorized grocery list from the week's meal plan.
- * Returns: { [category]: [{ name, totalQuantity, quantities: [...] }] }
+ * Shared between users.
  */
 export function useGroceryList(weekDates) {
     const { currentUser } = useAuth();
@@ -14,9 +14,9 @@ export function useGroceryList(weekDates) {
     const endDate = weekDates.length > 0 ? formatDate(weekDates[6]) : null;
 
     return useQuery({
-        queryKey: ['groceryList', userId, startDate, endDate],
+        queryKey: ['groceryList', startDate, endDate],
         queryFn: async () => {
-            if (!userId || !startDate || !endDate) return {};
+            if (!startDate || !endDate) return {};
 
             // Get all meal plan entries for the week, joined with recipe_ingredients and ingredients
             const { data, error } = await supabase
@@ -30,7 +30,6 @@ export function useGroceryList(weekDates) {
             )
           )
         `)
-                .eq('user_id', userId)
                 .gte('target_date', startDate)
                 .lte('target_date', endDate);
 

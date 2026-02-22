@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatDate } from '@/lib/dates';
 
 /**
- * Fetch meal plans for a given week (Mon–Sun).
+ * Fetch meal plans for a given week (Mon–Sun). Shared between users.
  * Returns a map: { "YYYY-MM-DD": { lunch: {...}, dinner: {...} } }
  */
 export function useMealPlan(weekDates) {
@@ -14,9 +14,9 @@ export function useMealPlan(weekDates) {
     const endDate = weekDates.length > 0 ? formatDate(weekDates[6]) : null;
 
     return useQuery({
-        queryKey: ['mealPlan', userId, startDate, endDate],
+        queryKey: ['mealPlan', startDate, endDate],
         queryFn: async () => {
-            if (!userId || !startDate || !endDate) return {};
+            if (!startDate || !endDate) return {};
 
             const { data, error } = await supabase
                 .from('meal_plan')
@@ -27,7 +27,6 @@ export function useMealPlan(weekDates) {
           recipe_id,
           recipes (id, name)
         `)
-                .eq('user_id', userId)
                 .gte('target_date', startDate)
                 .lte('target_date', endDate);
 
@@ -67,7 +66,7 @@ export function useAddMeal() {
                         target_date: targetDate,
                         slot_type: slotType,
                     },
-                    { onConflict: 'user_id,target_date,slot_type' }
+                    { onConflict: 'target_date,slot_type' }
                 )
                 .select()
                 .single();
@@ -98,7 +97,7 @@ export function useBulkAssignMeals() {
 
             const { error } = await supabase
                 .from('meal_plan')
-                .upsert(rows, { onConflict: 'user_id,target_date,slot_type' });
+                .upsert(rows, { onConflict: 'target_date,slot_type' });
 
             if (error) throw error;
         },
@@ -142,11 +141,10 @@ export function useCopyPreviousWeek() {
             const prevStart = formatDate(previousWeekDates[0]);
             const prevEnd = formatDate(previousWeekDates[6]);
 
-            // Fetch previous week's meals
+            // Fetch previous week's meals (shared)
             const { data: prevMeals, error: fetchError } = await supabase
                 .from('meal_plan')
                 .select('target_date, slot_type, recipe_id')
-                .eq('user_id', userId)
                 .gte('target_date', prevStart)
                 .lte('target_date', prevEnd);
 
@@ -170,7 +168,7 @@ export function useCopyPreviousWeek() {
 
             const { error: upsertError } = await supabase
                 .from('meal_plan')
-                .upsert(rows, { onConflict: 'user_id,target_date,slot_type' });
+                .upsert(rows, { onConflict: 'target_date,slot_type' });
 
             if (upsertError) throw upsertError;
             return rows.length;

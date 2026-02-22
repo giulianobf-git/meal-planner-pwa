@@ -2,18 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
-/** Recupera tutti gli ingredienti dell'utente corrente. */
+/** Recupera tutti gli ingredienti (condivisi tra utenti). */
 export function useIngredients(searchTerm = '') {
     const { currentUser } = useAuth();
     const userId = currentUser?.id;
 
     return useQuery({
-        queryKey: ['ingredients', userId, searchTerm],
+        queryKey: ['ingredients', searchTerm],
         queryFn: async () => {
             let query = supabase
                 .from('ingredients')
                 .select('id, name, category')
-                .eq('user_id', userId)
                 .order('name');
 
             if (searchTerm) {

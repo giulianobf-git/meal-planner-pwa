@@ -11,13 +11,12 @@ export function useGroceryExtras(weekStart) {
     const userId = currentUser?.id;
 
     return useQuery({
-        queryKey: ['groceryExtras', userId, weekStart],
+        queryKey: ['groceryExtras', weekStart],
         queryFn: async () => {
-            // 1. Fetch extras per questa settimana
+            // 1. Fetch extras per questa settimana (condivisi)
             const { data: extras, error: extrasError } = await supabase
                 .from('grocery_extras')
                 .select('id, ingredient_id, week_start')
-                .eq('user_id', userId)
                 .eq('week_start', weekStart);
 
             if (extrasError) throw extrasError;

@@ -2,18 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
-/** Fetch all recipes for the current user. */
+/** Fetch all recipes (shared between users). */
 export function useRecipes(searchTerm = '') {
     const { currentUser } = useAuth();
     const userId = currentUser?.id;
 
     return useQuery({
-        queryKey: ['recipes', userId, searchTerm],
+        queryKey: ['recipes', searchTerm],
         queryFn: async () => {
             let query = supabase
                 .from('recipes')
                 .select('id, name, instructions, created_at')
-                .eq('user_id', userId)
                 .order('name');
 
             if (searchTerm) {
