@@ -156,7 +156,7 @@ export default function PlannerPage() {
                                 <div className="divide-y divide-slate-700/20">
                                     {['breakfast', 'lunch', 'dinner'].map((slot) => {
                                         const meal = dayMeals[slot];
-                                        const slotLabel = slot === 'breakfast' ? '☀️ Colaz.' : slot === 'lunch' ? '🌤 Pranzo' : '🌙 Cena';
+                                        const slotLabel = slot === 'breakfast' ? '🥐 Colaz.' : slot === 'lunch' ? '☀️ Pranzo' : '🌙 Cena';
                                         return (
                                             <div key={slot} className="flex items-center px-4 py-2.5 min-h-[44px]">
                                                 <span className="text-[11px] font-semibold text-slate-500 uppercase w-14 flex-shrink-0">

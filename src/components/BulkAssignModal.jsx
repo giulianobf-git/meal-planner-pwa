@@ -127,7 +127,7 @@ export default function BulkAssignModal({ weekDates, onClose }) {
                                                             : 'bg-slate-700/40 border border-slate-500/40 text-slate-400 hover:bg-slate-700/60'
                                                             }`}
                                                     >
-                                                        {slot === 'breakfast' ? '☀️ Colaz.' : slot === 'lunch' ? '🌤 Pranzo' : '🌙 Cena'}
+                                                        {slot === 'breakfast' ? '🥐 Colaz.' : slot === 'lunch' ? '☀️ Pranzo' : '🌙 Cena'}
                                                     </button>
                                                 );
                                             })}
