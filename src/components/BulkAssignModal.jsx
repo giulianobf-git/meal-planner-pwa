@@ -78,7 +78,7 @@ export default function BulkAssignModal({ weekDates, onClose }) {
                         {recipes.length === 0 ? (
                             <p className="text-sm text-slate-500 text-center py-4">Nessuna ricetta trovata. Creane una prima!</p>
                         ) : (
-                            <div className="space-y-1 max-h-48 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                            <div className="space-y-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
                                 {recipes.map((recipe) => (
                                     <button
                                         key={recipe.id}
