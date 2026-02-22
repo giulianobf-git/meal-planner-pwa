@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useGroceryList } from '@/hooks/useGroceryList';
 import { useGroceryExtras, useAddGroceryExtra, useDeleteGroceryExtra } from '@/hooks/useGroceryExtras';
+import { useGroceryChecked, useToggleGroceryChecked } from '@/hooks/useGroceryChecked';
 import { useIngredients, useCreateIngredient, useUpdateIngredient, useDeleteIngredient, INGREDIENT_CATEGORIES } from '@/hooks/useIngredients';
 import { getDefaultMonday, getWeekDates, prevWeek, nextWeek, formatDate, monthYearLabel } from '@/lib/dates';
 import { ChevronLeft, ChevronRight, ShoppingCart, Check, Plus, Settings, Search, X, Edit2, Trash2 } from 'lucide-react';
@@ -44,7 +45,8 @@ export default function GroceryPage() {
     const weekStart = formatDate(weekDates[0]);
     const { data: groceryMap = {}, isLoading } = useGroceryList(weekDates);
     const { data: extras = [] } = useGroceryExtras(weekStart);
-    const [checkedItems, setCheckedItems] = useState({});
+    const { data: checkedItems = {} } = useGroceryChecked(weekStart);
+    const toggleChecked = useToggleGroceryChecked();
     const [toast, setToast] = useState(null);
 
     // Hidden items (recipe ingredients removed for this week, persisted in localStorage)
@@ -65,7 +67,7 @@ export default function GroceryPage() {
     const [showAddModal, setShowAddModal] = useState(false);
 
     const toggleItem = (id) => {
-        setCheckedItems((prev) => ({ ...prev, [id]: !prev[id] }));
+        toggleChecked.mutate({ itemKey: id, weekStart, checked: !checkedItems[id] });
     };
 
     const showToast = useCallback((msg) => setToast(msg), []);
@@ -379,8 +381,8 @@ function ManageIngredientsModal({ onClose }) {
                                         <button
                                             onClick={() => handleDelete(ing)}
                                             className={`p-2 rounded-lg transition-colors flex items-center gap-1 ${confirmDeleteId === ing.id
-                                                    ? 'bg-red-500/20 text-red-400'
-                                                    : 'hover:bg-red-500/20 text-slate-400 hover:text-red-400'
+                                                ? 'bg-red-500/20 text-red-400'
+                                                : 'hover:bg-red-500/20 text-slate-400 hover:text-red-400'
                                                 }`}
                                         >
                                             <Trash2 size={14} />
