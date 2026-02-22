@@ -440,22 +440,45 @@ function AddProductModal({ weekStart, onClose, onAdded }) {
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-5 py-3 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
-                    {ingredients.map((ing) => (
-                        <button
-                            key={ing.id}
-                            onClick={() => handleAdd(ing)}
-                            disabled={addExtra.isPending}
-                            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-slate-700/50 transition-colors active:scale-[0.99]"
-                        >
-                            <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <Plus size={14} className="text-green-400" />
+                    {(() => {
+                        // Group ingredients by category
+                        const grouped = {};
+                        for (const ing of ingredients) {
+                            const cat = ing.category || 'Altro';
+                            if (!grouped[cat]) grouped[cat] = [];
+                            grouped[cat].push(ing);
+                        }
+                        const orderedCats = CATEGORY_ORDER.filter(c => grouped[c]);
+                        const extraCats = Object.keys(grouped).filter(c => !CATEGORY_ORDER.includes(c)).sort();
+                        const allCats = [...orderedCats, ...extraCats];
+
+                        if (allCats.length === 0 && !search) {
+                            return <p className="text-sm text-slate-500 text-center py-8">Cerca un prodotto o creane uno nuovo.</p>;
+                        }
+
+                        return allCats.map(cat => (
+                            <div key={cat} className="mb-2">
+                                <div className="flex items-center gap-2 mb-1.5 mt-2">
+                                    <div className="h-px flex-1 bg-slate-700/50" />
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{cat}</span>
+                                    <div className="h-px flex-1 bg-slate-700/50" />
+                                </div>
+                                {grouped[cat].map(ing => (
+                                    <button
+                                        key={ing.id}
+                                        onClick={() => handleAdd(ing)}
+                                        disabled={addExtra.isPending}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-slate-700/50 transition-colors active:scale-[0.99]"
+                                    >
+                                        <div className="w-7 h-7 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Plus size={13} className="text-green-400" />
+                                        </div>
+                                        <p className="text-sm font-medium text-white truncate">{ing.name}</p>
+                                    </button>
+                                ))}
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-white truncate">{ing.name}</p>
-                                <p className="text-[10px] text-slate-500 font-medium">{ing.category}</p>
-                            </div>
-                        </button>
-                    ))}
+                        ));
+                    })()}
 
                     {search.length > 0 && (
                         <button
@@ -469,10 +492,6 @@ function AddProductModal({ weekStart, onClose, onAdded }) {
                                 Crea &quot;{search}&quot; e aggiungi
                             </span>
                         </button>
-                    )}
-
-                    {ingredients.length === 0 && !search && (
-                        <p className="text-sm text-slate-500 text-center py-8">Cerca un prodotto o creane uno nuovo.</p>
                     )}
                 </div>
 

@@ -127,3 +127,57 @@ export function useRemoveMeal() {
         },
     });
 }
+
+/**
+ * Copy the previous week's meal plan into the current week.
+ * Existing meals in the current week are preserved (upsert).
+ */
+export function useCopyPreviousWeek() {
+    const qc = useQueryClient();
+    const { currentUser } = useAuth();
+
+    return useMutation({
+        mutationFn: async ({ currentWeekDates, previousWeekDates }) => {
+            const userId = currentUser.id;
+            const prevStart = formatDate(previousWeekDates[0]);
+            const prevEnd = formatDate(previousWeekDates[6]);
+
+            // Fetch previous week's meals
+            const { data: prevMeals, error: fetchError } = await supabase
+                .from('meal_plan')
+                .select('target_date, slot_type, recipe_id')
+                .eq('user_id', userId)
+                .gte('target_date', prevStart)
+                .lte('target_date', prevEnd);
+
+            if (fetchError) throw fetchError;
+            if (!prevMeals || prevMeals.length === 0) {
+                throw new Error('NO_MEALS');
+            }
+
+            // Map prev dates → current dates (same day offset)
+            const rows = prevMeals.map((meal) => {
+                const prevDate = new Date(meal.target_date + 'T00:00:00');
+                const dayOffset = Math.round((prevDate - previousWeekDates[0]) / (1000 * 60 * 60 * 24));
+                const newDate = formatDate(currentWeekDates[dayOffset] || currentWeekDates[0]);
+                return {
+                    user_id: userId,
+                    recipe_id: meal.recipe_id,
+                    target_date: newDate,
+                    slot_type: meal.slot_type,
+                };
+            });
+
+            const { error: upsertError } = await supabase
+                .from('meal_plan')
+                .upsert(rows, { onConflict: 'user_id,target_date,slot_type' });
+
+            if (upsertError) throw upsertError;
+            return rows.length;
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['mealPlan'] });
+            qc.invalidateQueries({ queryKey: ['groceryList'] });
+        },
+    });
+}
