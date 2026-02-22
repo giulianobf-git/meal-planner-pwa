@@ -270,11 +270,13 @@ function ManageIngredientsModal({ onClose }) {
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
     const [editCategory, setEditCategory] = useState('');
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
     const startEdit = (ing) => {
         setEditingId(ing.id);
         setEditName(ing.name);
         setEditCategory(ing.category);
+        setConfirmDeleteId(null);
     };
 
     const saveEdit = async () => {
@@ -284,8 +286,14 @@ function ManageIngredientsModal({ onClose }) {
     };
 
     const handleDelete = (ing) => {
-        if (window.confirm(`Eliminare "${ing.name}"?`)) {
+        if (confirmDeleteId === ing.id) {
+            // Second tap — actually delete
             deleteIngredient.mutate(ing.id);
+            setConfirmDeleteId(null);
+        } else {
+            // First tap — ask for confirmation
+            setConfirmDeleteId(ing.id);
+            setEditingId(null);
         }
     };
 
@@ -370,9 +378,15 @@ function ManageIngredientsModal({ onClose }) {
                                         </button>
                                         <button
                                             onClick={() => handleDelete(ing)}
-                                            className="p-2 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                                            className={`p-2 rounded-lg transition-colors flex items-center gap-1 ${confirmDeleteId === ing.id
+                                                    ? 'bg-red-500/20 text-red-400'
+                                                    : 'hover:bg-red-500/20 text-slate-400 hover:text-red-400'
+                                                }`}
                                         >
                                             <Trash2 size={14} />
+                                            {confirmDeleteId === ing.id && (
+                                                <span className="text-[10px] font-bold">Elimina?</span>
+                                            )}
                                         </button>
                                     </div>
                                 )}
