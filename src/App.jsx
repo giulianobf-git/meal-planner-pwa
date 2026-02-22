@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import Layout from '@/components/Layout';
 import LoginPage from '@/pages/LoginPage';
 import PlannerPage from '@/pages/PlannerPage';
@@ -9,6 +10,7 @@ import GroceryPage from '@/pages/GroceryPage';
 
 function ProtectedRoute({ children }) {
     const { currentUser, authChecked } = useAuth();
+    useRealtimeSync(); // Single WebSocket — syncs data between users in real-time
     if (!authChecked) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-900">

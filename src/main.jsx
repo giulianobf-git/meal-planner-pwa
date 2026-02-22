@@ -8,7 +8,8 @@ import './index.css';
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: 1000 * 60 * 5, // 5 minutes
+            staleTime: 1000 * 30, // 30 seconds — keeps data fresh across users
+            refetchOnWindowFocus: true, // auto-refresh when app regains focus (crucial for iOS PWA)
             retry: 1,
         },
     },

@@ -30,7 +30,7 @@ export default defineConfig({
                         handler: 'NetworkFirst',
                         options: {
                             cacheName: 'supabase-api',
-                            expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 },
+                            expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 },
                         },
                     },
                 ],
