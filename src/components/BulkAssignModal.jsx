@@ -84,8 +84,8 @@ export default function BulkAssignModal({ weekDates, onClose }) {
                                         key={recipe.id}
                                         onClick={() => setSelectedRecipe(recipe)}
                                         className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${selectedRecipe?.id === recipe.id
-                                            ? 'bg-green-500/15 border border-green-500/30'
-                                            : 'bg-slate-700/30 border border-transparent hover:bg-slate-700/60'
+                                            ? 'bg-green-500/15 border border-green-500/50'
+                                            : 'bg-slate-700/30 border border-slate-500/40 hover:bg-slate-700/60'
                                             }`}
                                     >
                                         <ChefHat size={16} className={selectedRecipe?.id === recipe.id ? 'text-green-400' : 'text-slate-500'} />
@@ -123,8 +123,8 @@ export default function BulkAssignModal({ weekDates, onClose }) {
                                                         key={key}
                                                         onClick={() => toggleSlot(date, slot)}
                                                         className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all ${checked
-                                                            ? 'bg-green-500/20 border border-green-500/40 text-green-400'
-                                                            : 'bg-slate-700/40 border border-slate-600/30 text-slate-400 hover:bg-slate-700/60'
+                                                            ? 'bg-green-500/20 border border-green-500/60 text-green-400'
+                                                            : 'bg-slate-700/40 border border-slate-500/40 text-slate-400 hover:bg-slate-700/60'
                                                             }`}
                                                     >
                                                         {slot === 'lunch' ? '🌤 Pranzo' : '🌙 Cena'}
