@@ -10,8 +10,11 @@ export default function ExpenseFormModal({ onClose, onSave, expense = null, isPe
     const [paidBy, setPaidBy] = useState(expense?.paid_by || 'G');
     const [currency, setCurrency] = useState(expense?.currency || 'EUR');
     const [date, setDate] = useState(expense?.expense_date || new Date().toISOString().slice(0, 10));
+    const [splitType, setSplitType] = useState(expense?.split_type || 'split');
 
     const canSave = title.trim() && amount && Number(amount) > 0;
+
+    const otherUser = paidBy === 'G' ? 'L' : 'G';
 
     const handleSave = () => {
         if (!canSave) return;
@@ -22,6 +25,7 @@ export default function ExpenseFormModal({ onClose, onSave, expense = null, isPe
             paid_by: paidBy,
             currency,
             expense_date: date,
+            split_type: splitType,
         });
     };
 
@@ -113,6 +117,33 @@ export default function ExpenseFormModal({ onClose, onSave, expense = null, isPe
                                     {user}
                                 </button>
                             ))}
+                        </div>
+                    </div>
+
+                    {/* Split Type */}
+                    <div>
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
+                            Tipo
+                        </label>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setSplitType('split')}
+                                className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${splitType === 'split'
+                                        ? 'bg-purple-500/20 border border-purple-500/50 text-purple-400'
+                                        : 'bg-slate-700/40 border border-slate-600/40 text-slate-400'
+                                    }`}
+                            >
+                                Dividi 50/50
+                            </button>
+                            <button
+                                onClick={() => setSplitType('full')}
+                                className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${splitType === 'full'
+                                        ? 'bg-amber-500/20 border border-amber-500/50 text-amber-400'
+                                        : 'bg-slate-700/40 border border-slate-600/40 text-slate-400'
+                                    }`}
+                            >
+                                {otherUser} deve tutto
+                            </button>
                         </div>
                     </div>
 

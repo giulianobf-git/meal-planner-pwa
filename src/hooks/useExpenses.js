@@ -74,6 +74,7 @@ export function useDeleteExpense() {
 
 /**
  * Compute balances from expense list, grouped by currency.
+ * split_type: 'split' = 50/50, 'full' = entire amount owed by the other person.
  * Returns: { EUR: { total: 120, G: 100, L: 20, owed: { from: 'L', to: 'G', amount: 40 } }, ... }
  */
 export function computeBalances(expenses) {
@@ -81,31 +82,44 @@ export function computeBalances(expenses) {
 
     for (const exp of expenses) {
         const cur = exp.currency || 'EUR';
-        if (!byCurrency[cur]) byCurrency[cur] = { total: 0, G: 0, L: 0 };
+        if (!byCurrency[cur]) byCurrency[cur] = { total: 0, G: 0, L: 0, fairG: 0, fairL: 0 };
         const amount = Number(exp.amount);
+        const splitType = exp.split_type || 'split';
 
         if (exp.is_settlement) {
-            // Settlement: paid_by is the person paying back
-            // So it reduces how much paid_by owes
+            // Settlement: paid_by is the person paying back debt
             byCurrency[cur][exp.paid_by] += amount;
+            // Fair share: the settlement counts towards the payer's fair share too
+            byCurrency[cur][`fair${exp.paid_by}`] += amount;
         } else {
             byCurrency[cur].total += amount;
             byCurrency[cur][exp.paid_by] += amount;
+
+            if (splitType === 'full') {
+                // Entire expense is for the OTHER person's account
+                // So the payer's fair share is 0, the other's fair share is the full amount
+                const other = exp.paid_by === 'G' ? 'L' : 'G';
+                byCurrency[cur][`fair${other}`] += amount;
+            } else {
+                // 50/50 split
+                byCurrency[cur].fairG += amount / 2;
+                byCurrency[cur].fairL += amount / 2;
+            }
         }
     }
 
     const result = {};
     for (const [cur, data] of Object.entries(byCurrency)) {
-        const fairShare = data.total / 2;
-        const gBalance = data.G - fairShare; // positive = G overpaid
-        const lBalance = data.L - fairShare;
+        // Balance = what you paid − what you should have paid
+        const gBalance = data.G - data.fairG;
+        const lBalance = data.L - data.fairL;
 
         let owed = null;
         if (Math.abs(gBalance) > 0.01) {
             if (gBalance > 0) {
                 owed = { from: 'L', to: 'G', amount: Math.abs(gBalance) };
             } else {
-                owed = { from: 'G', to: 'L', amount: Math.abs(lBalance) };
+                owed = { from: 'G', to: 'L', amount: Math.abs(gBalance) };
             }
         }
 
