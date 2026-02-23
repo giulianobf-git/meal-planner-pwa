@@ -26,7 +26,7 @@ export default function ExpenseFormModal({ onClose, onSave, expense = null, isPe
     };
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: '100vh' }}>
+        <div className="fixed top-0 left-0 right-0 z-[60] overflow-x-hidden" style={{ height: '100vh' }}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div
                 className="absolute top-0 left-0 right-0 bottom-0 flex flex-col bg-slate-800"
@@ -106,8 +106,8 @@ export default function ExpenseFormModal({ onClose, onSave, expense = null, isPe
                                     key={user}
                                     onClick={() => setPaidBy(user)}
                                     className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${paidBy === user
-                                            ? 'bg-purple-500/20 border border-purple-500/50 text-purple-400'
-                                            : 'bg-slate-700/40 border border-slate-600/40 text-slate-400'
+                                        ? 'bg-purple-500/20 border border-purple-500/50 text-purple-400'
+                                        : 'bg-slate-700/40 border border-slate-600/40 text-slate-400'
                                         }`}
                                 >
                                     {user}

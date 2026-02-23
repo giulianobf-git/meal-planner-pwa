@@ -46,3 +46,17 @@ export function useDeleteProject() {
         onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
     });
 }
+
+export function useToggleArchiveProject() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ id, is_archived }) => {
+            const { error } = await supabase
+                .from('projects')
+                .update({ is_archived })
+                .eq('id', id);
+            if (error) throw error;
+        },
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
+    });
+}

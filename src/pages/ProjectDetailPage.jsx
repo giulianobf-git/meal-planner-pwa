@@ -153,8 +153,8 @@ export default function ProjectDetailPage() {
                 <button
                     onClick={() => setTab('expenses')}
                     className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all ${tab === 'expenses'
-                            ? 'bg-purple-500/20 text-purple-400'
-                            : 'text-slate-400 hover:text-slate-300'
+                        ? 'bg-purple-500/20 text-purple-400'
+                        : 'text-slate-400 hover:text-slate-300'
                         }`}
                 >
                     <Receipt size={14} /> Spese
@@ -162,8 +162,8 @@ export default function ProjectDetailPage() {
                 <button
                     onClick={() => setTab('stats')}
                     className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all ${tab === 'stats'
-                            ? 'bg-purple-500/20 text-purple-400'
-                            : 'text-slate-400 hover:text-slate-300'
+                        ? 'bg-purple-500/20 text-purple-400'
+                        : 'text-slate-400 hover:text-slate-300'
                         }`}
                 >
                     <BarChart3 size={14} /> Statistiche
@@ -179,65 +179,89 @@ export default function ProjectDetailPage() {
 
             {/* EXPENSES TAB */}
             {tab === 'expenses' && !isLoading && (
-                <div className="space-y-2">
+                <div className="space-y-4">
                     {expenses.length === 0 && (
                         <p className="text-center text-slate-500 py-8">Nessuna spesa. Aggiungi la prima!</p>
                     )}
-                    {expenses.map((exp) => (
-                        <div
-                            key={exp.id}
-                            className={`bg-slate-800/60 border rounded-xl px-4 py-3 ${exp.is_settlement
-                                    ? 'border-green-500/30 bg-green-500/5'
-                                    : 'border-slate-600/40'
-                                }`}
-                        >
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                        {exp.is_settlement && (
-                                            <Handshake size={12} className="text-green-400 flex-shrink-0" />
-                                        )}
-                                        <span className="text-sm font-semibold text-white truncate">
-                                            {exp.title}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-xs text-slate-500">
-                                        <span>{exp.expense_date}</span>
-                                        <span className={exp.paid_by === 'G' ? 'text-blue-400' : 'text-pink-400'}>
-                                            {exp.paid_by}
-                                        </span>
+                    {(() => {
+                        const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+                        const grouped = {};
+                        for (const exp of expenses) {
+                            const m = exp.expense_date?.slice(0, 7) || 'unknown';
+                            if (!grouped[m]) grouped[m] = [];
+                            grouped[m].push(exp);
+                        }
+                        const sortedMonths = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+                        return sortedMonths.map((month) => {
+                            const [y, mo] = month.split('-');
+                            const label = `${monthNames[parseInt(mo) - 1]} ${y}`;
+                            return (
+                                <div key={month}>
+                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">
+                                        {label}
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {grouped[month].map((exp) => (
+                                            <div
+                                                key={exp.id}
+                                                className={`bg-slate-800/60 border rounded-xl px-4 py-3 ${exp.is_settlement
+                                                        ? 'border-green-500/30 bg-green-500/5'
+                                                        : 'border-slate-600/40'
+                                                    }`}
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-0.5">
+                                                            {exp.is_settlement && (
+                                                                <Handshake size={12} className="text-green-400 flex-shrink-0" />
+                                                            )}
+                                                            <span className="text-sm font-semibold text-white truncate">
+                                                                {exp.title}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 text-xs text-slate-500">
+                                                            <span>{exp.expense_date}</span>
+                                                            <span className={exp.paid_by === 'G' ? 'text-blue-400' : 'text-pink-400'}>
+                                                                {exp.paid_by}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                                                        <span className={`text-sm font-bold ${exp.is_settlement ? 'text-green-400' : 'text-white'
+                                                            }`}>
+                                                            {exp.is_settlement ? '+' : ''}{Number(exp.amount).toFixed(2)} {exp.currency}
+                                                        </span>
+                                                        {!exp.is_settlement && (
+                                                            <button
+                                                                onClick={() => { setEditingExpense(exp); setShowExpenseForm(true); }}
+                                                                className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-500 hover:text-slate-300 transition-colors"
+                                                            >
+                                                                <Edit2 size={13} />
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            onClick={() => handleDelete(exp.id)}
+                                                            className={`p-1.5 rounded-lg transition-all ${confirmDeleteId === exp.id
+                                                                    ? 'bg-red-500/20 text-red-400'
+                                                                    : 'hover:bg-red-500/10 text-slate-600 hover:text-red-400'
+                                                                }`}
+                                                        >
+                                                            {confirmDeleteId === exp.id ? (
+                                                                <span className="text-[10px] font-bold">Elimina?</span>
+                                                            ) : (
+                                                                <Trash2 size={13} />
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                                    <span className={`text-sm font-bold ${exp.is_settlement ? 'text-green-400' : 'text-white'
-                                        }`}>
-                                        {exp.is_settlement ? '+' : ''}{Number(exp.amount).toFixed(2)} {exp.currency}
-                                    </span>
-                                    {!exp.is_settlement && (
-                                        <button
-                                            onClick={() => { setEditingExpense(exp); setShowExpenseForm(true); }}
-                                            className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-500 hover:text-slate-300 transition-colors"
-                                        >
-                                            <Edit2 size={13} />
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={() => handleDelete(exp.id)}
-                                        className={`p-1.5 rounded-lg transition-all ${confirmDeleteId === exp.id
-                                                ? 'bg-red-500/20 text-red-400'
-                                                : 'hover:bg-red-500/10 text-slate-600 hover:text-red-400'
-                                            }`}
-                                    >
-                                        {confirmDeleteId === exp.id ? (
-                                            <span className="text-[10px] font-bold">Elimina?</span>
-                                        ) : (
-                                            <Trash2 size={13} />
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                            );
+                        });
+                    })()}
                 </div>
             )}
 

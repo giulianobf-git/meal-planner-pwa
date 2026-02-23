@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProjects, useCreateProject, useDeleteProject } from '@/hooks/useProjects';
+import { useProjects, useCreateProject, useDeleteProject, useToggleArchiveProject } from '@/hooks/useProjects';
 import { useExpenses, computeBalances } from '@/hooks/useExpenses';
-import { Wallet, Plus, Trash2, ChevronRight, FolderOpen } from 'lucide-react';
+import { Wallet, Plus, Trash2, ChevronRight, FolderOpen, Archive, ChevronDown } from 'lucide-react';
 
 /* Small helper: fetch expenses for a single project card */
 function ProjectCard({ project, onClick }) {
@@ -16,14 +16,14 @@ function ProjectCard({ project, onClick }) {
             className="w-full text-left bg-slate-800/60 border border-slate-600/50 rounded-2xl p-4 transition-all active:scale-[0.98] hover:bg-slate-800"
         >
             <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                     <FolderOpen size={18} className={project.is_default ? 'text-green-400' : 'text-slate-400'} />
-                    <h3 className="text-base font-bold text-white">{project.name}</h3>
+                    <h3 className="text-base font-bold text-white truncate">{project.name}</h3>
                     {project.is_default && (
-                        <span className="text-[10px] font-semibold bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Default</span>
+                        <span className="text-[10px] font-semibold bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full flex-shrink-0">Default</span>
                     )}
                 </div>
-                <ChevronRight size={18} className="text-slate-500" />
+                <ChevronRight size={18} className="text-slate-500 flex-shrink-0" />
             </div>
 
             {currencies.length === 0 ? (
@@ -58,9 +58,14 @@ export default function ContiPage() {
     const { data: projects = [], isLoading } = useProjects();
     const createProject = useCreateProject();
     const deleteProject = useDeleteProject();
+    const archiveProject = useToggleArchiveProject();
     const [showNew, setShowNew] = useState(false);
     const [newName, setNewName] = useState('');
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+    const [showArchived, setShowArchived] = useState(false);
+
+    const activeProjects = projects.filter((p) => !p.is_archived);
+    const archivedProjects = projects.filter((p) => p.is_archived);
 
     const handleCreate = async () => {
         const trimmed = newName.trim();
@@ -78,6 +83,10 @@ export default function ContiPage() {
             setConfirmDeleteId(id);
             setTimeout(() => setConfirmDeleteId(null), 3000);
         }
+    };
+
+    const handleArchive = async (id, archived) => {
+        await archiveProject.mutateAsync({ id, is_archived: archived });
     };
 
     return (
@@ -100,7 +109,7 @@ export default function ContiPage() {
 
             {/* New project input */}
             {showNew && (
-                <div className="flex gap-2 mb-4 animate-fade-in">
+                <div className="flex gap-2 mb-4">
                     <input
                         type="text"
                         placeholder="Nome progetto..."
@@ -127,35 +136,80 @@ export default function ContiPage() {
                 </div>
             )}
 
-            {/* Project list */}
+            {/* Active project list */}
             <div className="space-y-3">
-                {projects.map((project) => (
+                {activeProjects.map((project) => (
                     <div key={project.id} className="relative">
                         <ProjectCard
                             project={project}
                             onClick={() => navigate(`/conti/${project.id}`)}
                         />
-                        {!project.is_default && (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }}
-                                className={`absolute top-3 right-12 p-2 rounded-lg transition-all ${confirmDeleteId === project.id
-                                        ? 'bg-red-500/20 text-red-400'
-                                        : 'text-slate-600 hover:text-red-400 hover:bg-red-500/10'
-                                    }`}
-                            >
-                                {confirmDeleteId === project.id ? (
-                                    <span className="text-xs font-bold">Elimina?</span>
-                                ) : (
-                                    <Trash2 size={14} />
-                                )}
-                            </button>
-                        )}
+                        <div className="absolute top-3 right-12 flex gap-1">
+                            {!project.is_default && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleArchive(project.id, true); }}
+                                    className="p-2 rounded-lg text-slate-600 hover:text-purple-400 hover:bg-purple-500/10 transition-all"
+                                    title="Archivia"
+                                >
+                                    <Archive size={14} />
+                                </button>
+                            )}
+                            {!project.is_default && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }}
+                                    className={`p-2 rounded-lg transition-all ${confirmDeleteId === project.id
+                                            ? 'bg-red-500/20 text-red-400'
+                                            : 'text-slate-600 hover:text-red-400 hover:bg-red-500/10'
+                                        }`}
+                                >
+                                    {confirmDeleteId === project.id ? (
+                                        <span className="text-xs font-bold">Elimina?</span>
+                                    ) : (
+                                        <Trash2 size={14} />
+                                    )}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>
 
-            {!isLoading && projects.length === 0 && (
-                <p className="text-center text-slate-500 py-12">Nessun progetto trovato.</p>
+            {!isLoading && activeProjects.length === 0 && (
+                <p className="text-center text-slate-500 py-12">Nessun progetto attivo.</p>
+            )}
+
+            {/* Archived section */}
+            {archivedProjects.length > 0 && (
+                <div className="mt-6">
+                    <button
+                        onClick={() => setShowArchived(!showArchived)}
+                        className="flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-slate-300 mb-3 transition-colors"
+                    >
+                        <Archive size={14} />
+                        <span>Archiviati ({archivedProjects.length})</span>
+                        <ChevronDown size={14} className={`transition-transform ${showArchived ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {showArchived && (
+                        <div className="space-y-3">
+                            {archivedProjects.map((project) => (
+                                <div key={project.id} className="relative opacity-70">
+                                    <ProjectCard
+                                        project={project}
+                                        onClick={() => navigate(`/conti/${project.id}`)}
+                                    />
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleArchive(project.id, false); }}
+                                        className="absolute top-3 right-12 p-2 rounded-lg text-slate-500 hover:text-green-400 hover:bg-green-500/10 transition-all"
+                                        title="Ripristina"
+                                    >
+                                        <Archive size={14} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             )}
         </div>
     );
