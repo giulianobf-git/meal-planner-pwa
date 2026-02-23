@@ -1,10 +1,11 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { CalendarDays, ChefHat, ShoppingCart } from 'lucide-react';
+import { CalendarDays, ChefHat, ShoppingCart, Wallet } from 'lucide-react';
 
 const navItems = [
     { to: '/', icon: CalendarDays, label: 'Planner' },
     { to: '/recipes', icon: ChefHat, label: 'Ricette' },
     { to: '/grocery', icon: ShoppingCart, label: 'Spesa' },
+    { to: '/conti', icon: Wallet, label: 'Conti' },
 ];
 
 export default function Layout() {

@@ -33,6 +33,12 @@ export function useRealtimeSync() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'ingredients' }, () => {
                 qc.invalidateQueries({ queryKey: ['ingredients'] });
             })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => {
+                qc.invalidateQueries({ queryKey: ['projects'] });
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => {
+                qc.invalidateQueries({ queryKey: ['expenses'] });
+            })
             .subscribe();
 
         return () => {

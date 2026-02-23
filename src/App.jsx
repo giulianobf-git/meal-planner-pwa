@@ -7,6 +7,8 @@ import PlannerPage from '@/pages/PlannerPage';
 import RecipesPage from '@/pages/RecipesPage';
 import RecipeFormPage from '@/pages/RecipeFormPage';
 import GroceryPage from '@/pages/GroceryPage';
+import ContiPage from '@/pages/ContiPage';
+import ProjectDetailPage from '@/pages/ProjectDetailPage';
 
 function ProtectedRoute({ children }) {
     const { currentUser, authChecked } = useAuth();
@@ -40,6 +42,8 @@ export default function App() {
                     <Route path="recipes/new" element={<RecipeFormPage />} />
                     <Route path="recipes/:id/edit" element={<RecipeFormPage />} />
                     <Route path="grocery" element={<GroceryPage />} />
+                    <Route path="conti" element={<ContiPage />} />
+                    <Route path="conti/:id" element={<ProjectDetailPage />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
