@@ -26,10 +26,10 @@ export default function ExpenseFormModal({ onClose, onSave, expense = null, isPe
     };
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-[60] overflow-x-hidden" style={{ height: '100vh' }}>
+        <div className="fixed inset-0 z-[60] overflow-hidden" style={{ height: '100vh', width: '100vw' }}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div
-                className="absolute top-0 left-0 right-0 bottom-0 flex flex-col bg-slate-800"
+                className="absolute inset-0 flex flex-col bg-slate-800 overflow-hidden"
                 style={{
                     paddingTop: 'env(safe-area-inset-top, 0px)',
                     paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -46,7 +46,7 @@ export default function ExpenseFormModal({ onClose, onSave, expense = null, isPe
                 </div>
 
                 {/* Form */}
-                <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-5 space-y-5" style={{ WebkitOverflowScrolling: 'touch' }}>
                     {/* Title */}
                     <div>
                         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
@@ -126,6 +126,7 @@ export default function ExpenseFormModal({ onClose, onSave, expense = null, isPe
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
                             className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-sm text-white outline-none focus:border-purple-500/50"
+                            style={{ maxWidth: '100%', boxSizing: 'border-box' }}
                         />
                     </div>
                 </div>
