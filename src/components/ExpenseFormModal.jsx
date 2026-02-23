@@ -125,8 +125,7 @@ export default function ExpenseFormModal({ onClose, onSave, expense = null, isPe
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-sm text-white outline-none focus:border-purple-500/50"
-                            style={{ maxWidth: '100%', boxSizing: 'border-box' }}
+                            className="w-48 px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-sm text-white outline-none focus:border-purple-500/50"
                         />
                     </div>
                 </div>
