@@ -38,8 +38,8 @@ function ProjectCard({ project, onClick }) {
                                     Totale: {b.total.toFixed(2)} {cur}
                                 </span>
                                 {b.owed ? (
-                                    <span className="text-xs font-semibold text-amber-400">
-                                        {b.owed.from} deve {b.owed.amount.toFixed(2)} {cur} a {b.owed.to}
+                                    <span className="text-xs font-bold text-amber-400">
+                                        {b.owed.from} deve {b.owed.amount.toFixed(2)} {cur}
                                     </span>
                                 ) : (
                                     <span className="text-xs text-green-400 font-semibold">Pari ✓</span>
@@ -158,8 +158,8 @@ export default function ContiPage() {
                                 <button
                                     onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }}
                                     className={`p-2 rounded-lg transition-all ${confirmDeleteId === project.id
-                                            ? 'bg-red-500/20 text-red-400'
-                                            : 'text-slate-600 hover:text-red-400 hover:bg-red-500/10'
+                                        ? 'bg-red-500/20 text-red-400'
+                                        : 'text-slate-600 hover:text-red-400 hover:bg-red-500/10'
                                         }`}
                                 >
                                     {confirmDeleteId === project.id ? (

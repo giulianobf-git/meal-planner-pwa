@@ -19,7 +19,7 @@ export default function Layout() {
             {/* Nav fissa in basso */}
             <nav
                 className="fixed bottom-0 left-0 right-0 z-50 bg-slate-800/95 backdrop-blur-lg border-t border-slate-700/50"
-                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+                style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
             >
                 <div className="flex items-center justify-around max-w-lg mx-auto h-16">
                     {navItems.map(({ to, icon: Icon, label }) => (

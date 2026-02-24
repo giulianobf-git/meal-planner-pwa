@@ -4,7 +4,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useExpenses, useAddExpense, useUpdateExpense, useDeleteExpense, computeBalances, computeMonthlyStats } from '@/hooks/useExpenses';
 import ExpenseFormModal from '@/components/ExpenseFormModal';
 import SettleDebtModal from '@/components/SettleDebtModal';
-import { ArrowLeft, Plus, Trash2, Edit2, Handshake, BarChart3, Receipt } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Handshake, BarChart3, Receipt, Search } from 'lucide-react';
 
 export default function ProjectDetailPage() {
     const { id: projectId } = useParams();
@@ -21,6 +21,7 @@ export default function ProjectDetailPage() {
     const [editingExpense, setEditingExpense] = useState(null);
     const [showSettle, setShowSettle] = useState(false);
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const balances = useMemo(() => computeBalances(expenses), [expenses]);
     const monthlyStats = useMemo(() => computeMonthlyStats(expenses), [expenses]);
@@ -97,8 +98,8 @@ export default function ProjectDetailPage() {
                                             Totale: {b.total.toFixed(2)} {cur}
                                         </span>
                                         {b.owed ? (
-                                            <span className="text-xs font-bold text-amber-400">
-                                                {b.owed.from} deve {b.owed.amount.toFixed(2)} {cur} a {b.owed.to}
+                                            <span className="text-sm font-bold text-amber-400">
+                                                {b.owed.from} deve {b.owed.amount.toFixed(2)} {cur}
                                             </span>
                                         ) : (
                                             <span className="text-xs font-bold text-green-400">Pari ✓</span>
@@ -180,13 +181,28 @@ export default function ProjectDetailPage() {
             {/* EXPENSES TAB */}
             {tab === 'expenses' && !isLoading && (
                 <div className="space-y-4">
+                    {/* Search bar */}
+                    {expenses.length > 0 && (
+                        <div className="relative">
+                            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                            <input
+                                type="text"
+                                placeholder="Cerca spesa..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-800/60 border border-slate-600/50 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/50"
+                            />
+                        </div>
+                    )}
                     {expenses.length === 0 && (
                         <p className="text-center text-slate-500 py-8">Nessuna spesa. Aggiungi la prima!</p>
                     )}
                     {(() => {
                         const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
                         const grouped = {};
+                        const query = searchQuery.toLowerCase().trim();
                         for (const exp of expenses) {
+                            if (query && !exp.title?.toLowerCase().includes(query)) continue;
                             const m = exp.expense_date?.slice(0, 7) || 'unknown';
                             if (!grouped[m]) grouped[m] = [];
                             grouped[m].push(exp);
@@ -206,8 +222,8 @@ export default function ProjectDetailPage() {
                                             <div
                                                 key={exp.id}
                                                 className={`bg-slate-800/60 border rounded-xl px-4 py-3 ${exp.is_settlement
-                                                        ? 'border-green-500/30 bg-green-500/5'
-                                                        : 'border-slate-600/40'
+                                                    ? 'border-green-500/30 bg-green-500/5'
+                                                    : 'border-slate-600/40'
                                                     }`}
                                             >
                                                 <div className="flex items-start justify-between">
@@ -243,8 +259,8 @@ export default function ProjectDetailPage() {
                                                         <button
                                                             onClick={() => handleDelete(exp.id)}
                                                             className={`p-1.5 rounded-lg transition-all ${confirmDeleteId === exp.id
-                                                                    ? 'bg-red-500/20 text-red-400'
-                                                                    : 'hover:bg-red-500/10 text-slate-600 hover:text-red-400'
+                                                                ? 'bg-red-500/20 text-red-400'
+                                                                : 'hover:bg-red-500/10 text-slate-600 hover:text-red-400'
                                                                 }`}
                                                         >
                                                             {confirmDeleteId === exp.id ? (
