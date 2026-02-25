@@ -87,10 +87,10 @@ export function computeBalances(expenses) {
         const splitType = exp.split_type || 'split';
 
         if (exp.is_settlement) {
-            // Settlement: paid_by is the person paying back debt
+            // Settlement: paid_by is the person paying back debt.
+            // Only add to their "paid" total — NOT to fair share.
+            // This shifts their balance (paid − fair) upward, reducing their debt.
             byCurrency[cur][exp.paid_by] += amount;
-            // Fair share: the settlement counts towards the payer's fair share too
-            byCurrency[cur][`fair${exp.paid_by}`] += amount;
         } else {
             byCurrency[cur].total += amount;
             byCurrency[cur][exp.paid_by] += amount;
