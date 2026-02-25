@@ -87,10 +87,12 @@ export function computeBalances(expenses) {
         const splitType = exp.split_type || 'split';
 
         if (exp.is_settlement) {
-            // Settlement: paid_by is the person paying back debt.
-            // Only add to their "paid" total — NOT to fair share.
-            // This shifts their balance (paid − fair) upward, reducing their debt.
+            // Settlement is a TRANSFER: paid_by pays back the other person.
+            // 1. Increase payer's "paid" → shifts their balance up (debt reduced)
             byCurrency[cur][exp.paid_by] += amount;
+            // 2. Increase receiver's "fair" → shifts their balance down (credit reduced)
+            const receiver = exp.paid_by === 'G' ? 'L' : 'G';
+            byCurrency[cur][`fair${receiver}`] += amount;
         } else {
             byCurrency[cur].total += amount;
             byCurrency[cur][exp.paid_by] += amount;
