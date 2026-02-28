@@ -82,7 +82,7 @@ export function computeBalances(expenses) {
 
     for (const exp of expenses) {
         const cur = exp.currency || 'EUR';
-        if (!byCurrency[cur]) byCurrency[cur] = { total: 0, G: 0, L: 0, fairG: 0, fairL: 0 };
+        if (!byCurrency[cur]) byCurrency[cur] = { total: 0, G: 0, L: 0, spentG: 0, spentL: 0, fairG: 0, fairL: 0 };
         const amount = Number(exp.amount);
         const splitType = exp.split_type || 'split';
 
@@ -96,6 +96,7 @@ export function computeBalances(expenses) {
         } else {
             byCurrency[cur].total += amount;
             byCurrency[cur][exp.paid_by] += amount;
+            byCurrency[cur][`spent${exp.paid_by}`] += amount;
 
             if (splitType === 'full') {
                 // Entire expense is for the OTHER person's account
@@ -125,7 +126,7 @@ export function computeBalances(expenses) {
             }
         }
 
-        result[cur] = { total: data.total, G: data.G, L: data.L, owed };
+        result[cur] = { total: data.total, G: data.G, L: data.L, spentG: data.spentG, spentL: data.spentL, owed };
     }
 
     return result;

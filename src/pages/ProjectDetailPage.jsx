@@ -109,18 +109,18 @@ export default function ProjectDetailPage() {
                                     <div className="flex gap-1 h-2">
                                         <div
                                             className="bg-blue-500/60 rounded-full"
-                                            style={{ width: `${b.total > 0 ? (b.G / b.total) * 100 : 50}%` }}
-                                            title={`G: ${b.G.toFixed(2)}`}
+                                            style={{ width: `${b.total > 0 ? (b.spentG / b.total) * 100 : 50}%` }}
+                                            title={`G: ${b.spentG.toFixed(2)}`}
                                         />
                                         <div
                                             className="bg-pink-500/60 rounded-full"
-                                            style={{ width: `${b.total > 0 ? (b.L / b.total) * 100 : 50}%` }}
-                                            title={`L: ${b.L.toFixed(2)}`}
+                                            style={{ width: `${b.total > 0 ? (b.spentL / b.total) * 100 : 50}%` }}
+                                            title={`L: ${b.spentL.toFixed(2)}`}
                                         />
                                     </div>
                                     <div className="flex justify-between mt-1">
-                                        <span className="text-[10px] text-blue-400 font-semibold">G: {b.G.toFixed(2)}</span>
-                                        <span className="text-[10px] text-pink-400 font-semibold">L: {b.L.toFixed(2)}</span>
+                                        <span className="text-[10px] text-blue-400 font-semibold">G: {b.spentG.toFixed(2)}</span>
+                                        <span className="text-[10px] text-pink-400 font-semibold">L: {b.spentL.toFixed(2)}</span>
                                     </div>
                                 </div>
                             );
@@ -300,8 +300,8 @@ export default function ProjectDetailPage() {
                                             <span className="text-white font-bold">{b.total.toFixed(2)} {cur}</span>
                                         </div>
                                         <div className="flex justify-between text-xs">
-                                            <span className="text-blue-400">G: {b.G.toFixed(2)} {cur}</span>
-                                            <span className="text-pink-400">L: {b.L.toFixed(2)} {cur}</span>
+                                            <span className="text-blue-400">G: {b.spentG.toFixed(2)} {cur}</span>
+                                            <span className="text-pink-400">L: {b.spentL.toFixed(2)} {cur}</span>
                                         </div>
                                     </div>
                                 );
