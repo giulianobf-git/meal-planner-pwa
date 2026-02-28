@@ -274,6 +274,12 @@ function ManageIngredientsModal({ onClose }) {
     const [editCategory, setEditCategory] = useState('');
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
+    // Lock body scroll while modal is open
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
     const startEdit = (ing) => {
         setEditingId(ing.id);
         setEditName(ing.name);
@@ -300,10 +306,10 @@ function ManageIngredientsModal({ onClose }) {
     };
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: '100vh' }}>
+        <div className="fixed inset-0 z-[60] overflow-hidden" style={{ height: '100vh', width: '100vw' }}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div
-                className="absolute top-0 left-0 right-0 bottom-0 flex flex-col bg-slate-800"
+                className="absolute inset-0 flex flex-col bg-slate-800 overflow-hidden"
                 style={{
                     paddingTop: 'env(safe-area-inset-top, 0px)',
                     paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -415,6 +421,12 @@ function AddProductModal({ weekStart, onClose, onAdded }) {
     const [newName, setNewName] = useState('');
     const [newCategory, setNewCategory] = useState('Utilities home');
 
+    // Lock body scroll while modal is open
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
     const handleAdd = async (ing) => {
         await addExtra.mutateAsync({ ingredientId: ing.id, weekStart });
         onAdded(ing.name);
@@ -431,10 +443,10 @@ function AddProductModal({ weekStart, onClose, onAdded }) {
     };
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: '100vh' }}>
+        <div className="fixed inset-0 z-[60] overflow-hidden" style={{ height: '100vh', width: '100vw' }}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div
-                className="absolute top-0 left-0 right-0 bottom-0 flex flex-col bg-slate-800"
+                className="absolute inset-0 flex flex-col bg-slate-800 overflow-hidden"
                 style={{
                     paddingTop: 'env(safe-area-inset-top, 0px)',
                     paddingBottom: 'env(safe-area-inset-bottom, 0px)',
