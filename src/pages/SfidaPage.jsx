@@ -181,13 +181,13 @@ export default function SfidaPage() {
     const prevWeek = () => {
         const d = new Date(mondayStr + 'T00:00:00');
         d.setDate(d.getDate() - 7);
-        setMondayStr(d.toISOString().slice(0, 10));
+        setMondayStr(toLocalDateStr(d));
     };
 
     const nextWeek = () => {
         const d = new Date(mondayStr + 'T00:00:00');
         d.setDate(d.getDate() + 7);
-        setMondayStr(d.toISOString().slice(0, 10));
+        setMondayStr(toLocalDateStr(d));
     };
 
     // Stats
