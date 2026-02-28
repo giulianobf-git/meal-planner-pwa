@@ -9,6 +9,7 @@ import RecipeFormPage from '@/pages/RecipeFormPage';
 import GroceryPage from '@/pages/GroceryPage';
 import ContiPage from '@/pages/ContiPage';
 import ProjectDetailPage from '@/pages/ProjectDetailPage';
+import SfidaPage from '@/pages/SfidaPage';
 
 function ProtectedRoute({ children }) {
     const { currentUser, authChecked } = useAuth();
@@ -44,6 +45,7 @@ export default function App() {
                     <Route path="grocery" element={<GroceryPage />} />
                     <Route path="conti" element={<ContiPage />} />
                     <Route path="conti/:id" element={<ProjectDetailPage />} />
+                    <Route path="sfida" element={<SfidaPage />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

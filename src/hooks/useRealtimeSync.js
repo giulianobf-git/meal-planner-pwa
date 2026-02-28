@@ -39,6 +39,12 @@ export function useRealtimeSync() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => {
                 qc.invalidateQueries({ queryKey: ['expenses'] });
             })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_checks' }, () => {
+                qc.invalidateQueries({ queryKey: ['dailyChecks'] });
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_results' }, () => {
+                qc.invalidateQueries({ queryKey: ['weeklyResults'] });
+            })
             .subscribe();
 
         return () => {

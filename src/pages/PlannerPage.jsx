@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus, X, LogOut, Sparkles, Copy, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, LogOut, Sparkles, Copy, Check, Trophy } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMealPlan, useRemoveMeal, useCopyPreviousWeek } from '@/hooks/useMealPlan';
 import { getDefaultMonday, getWeekDates, prevWeek, nextWeek, formatDate, shortDayLabel, monthYearLabel, isToday } from '@/lib/dates';
@@ -22,6 +23,7 @@ function Toast({ message, type = 'success', onDone }) {
 }
 
 export default function PlannerPage() {
+    const navigate = useNavigate();
     const { currentUser, logout } = useAuth();
     const [monday, setMonday] = useState(() => getDefaultMonday());
     const weekDates = useMemo(() => getWeekDates(monday), [monday]);
@@ -67,13 +69,22 @@ export default function PlannerPage() {
                         </div>
                     )}
                 </div>
-                <button
-                    onClick={logout}
-                    className="p-2.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors"
-                    aria-label="Esci"
-                >
-                    <LogOut size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => navigate('/sfida')}
+                        className="p-2.5 rounded-xl bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors"
+                        aria-label="Sfida"
+                    >
+                        <Trophy size={18} />
+                    </button>
+                    <button
+                        onClick={logout}
+                        className="p-2.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                        aria-label="Esci"
+                    >
+                        <LogOut size={18} />
+                    </button>
+                </div>
             </div>
 
             {/* Navigazione settimana */}
