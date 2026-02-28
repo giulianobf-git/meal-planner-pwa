@@ -2,6 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 /**
+ * Format a Date object as YYYY-MM-DD using LOCAL time (not UTC).
+ * Using toISOString() shifts dates by -1 day in UTC+ timezones.
+ */
+function toLocalDateStr(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+/**
  * Fetch all weekly results, ordered newest first.
  */
 export function useWeeklyResults() {
@@ -59,7 +70,7 @@ export function shouldFinalizeWeek(mondayStr) {
 }
 
 /**
- * Get Monday of the current week.
+ * Get Monday of the current week (local time).
  */
 export function getCurrentMonday() {
     const now = new Date();
@@ -67,11 +78,12 @@ export function getCurrentMonday() {
     const diff = day === 0 ? -6 : 1 - day; // Monday = 1
     const monday = new Date(now);
     monday.setDate(now.getDate() + diff);
-    return monday.toISOString().slice(0, 10);
+    return toLocalDateStr(monday);
 }
 
 /**
  * Get the 7 date strings (YYYY-MM-DD) for a week starting on the given Monday.
+ * Uses local time to avoid UTC date shifts.
  */
 export function getWeekDatesFromMonday(mondayStr) {
     const dates = [];
@@ -79,7 +91,10 @@ export function getWeekDatesFromMonday(mondayStr) {
     for (let i = 0; i < 7; i++) {
         const day = new Date(d);
         day.setDate(d.getDate() + i);
-        dates.push(day.toISOString().slice(0, 10));
+        dates.push(toLocalDateStr(day));
     }
     return dates;
 }
+
+/** Export for use in SfidaPage */
+export { toLocalDateStr };

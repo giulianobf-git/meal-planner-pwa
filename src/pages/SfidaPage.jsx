@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDailyChecks, useUpsertCheck, getCheckForDay, computeDayPoints, computeWeekPoints } from '@/hooks/useDailyChecks';
-import { useWeeklyResults, useFinalizeWeek, shouldFinalizeWeek, getCurrentMonday, getWeekDatesFromMonday } from '@/hooks/useWeeklyResults';
+import { useWeeklyResults, useFinalizeWeek, shouldFinalizeWeek, getCurrentMonday, getWeekDatesFromMonday, toLocalDateStr } from '@/hooks/useWeeklyResults';
 import { ArrowLeft, Trophy, Dumbbell, UtensilsCrossed, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
@@ -162,18 +162,17 @@ export default function SfidaPage() {
     const isFinalized = Boolean(weekResult);
 
     const points = useMemo(() => computeWeekPoints(checks), [checks]);
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = toLocalDateStr(new Date());
 
-    // Auto-finalize when conditions are met
+    // Auto-finalize ONLY the current week after Sunday 6PM
     useEffect(() => {
-        if (!checksLoading && !resultsLoading && !isFinalized && shouldFinalizeWeek(mondayStr)) {
-            // Only auto-finalize if there are any checks for this week
+        if (!checksLoading && !resultsLoading && !isFinalized && isCurrentWeek && shouldFinalizeWeek(mondayStr)) {
             if (checks.length > 0) {
                 const pts = computeWeekPoints(checks);
                 finalizeWeek.mutate({ week_start: mondayStr, g_points: pts.G, l_points: pts.L });
             }
         }
-    }, [checksLoading, resultsLoading, isFinalized, mondayStr, checks]);
+    }, [checksLoading, resultsLoading, isFinalized, isCurrentWeek, mondayStr, checks]);
 
     const handleToggle = (check) => {
         upsertCheck.mutate(check);
