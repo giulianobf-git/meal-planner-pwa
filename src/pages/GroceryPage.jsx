@@ -300,11 +300,14 @@ function ManageIngredientsModal({ onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center">
+        <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: '100vh' }}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div
-                className="relative w-full max-w-lg bg-slate-800 rounded-t-3xl flex flex-col animate-slide-up"
-                style={{ maxHeight: '85dvh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+                className="absolute top-0 left-0 right-0 bottom-0 flex flex-col bg-slate-800"
+                style={{
+                    paddingTop: 'env(safe-area-inset-top, 0px)',
+                    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+                }}
             >
                 <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50 flex-shrink-0">
                     <h2 className="text-lg font-bold text-white">Gestisci Prodotti</h2>
@@ -428,11 +431,14 @@ function AddProductModal({ weekStart, onClose, onAdded }) {
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center">
+        <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: '100vh' }}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div
-                className="relative w-full max-w-lg bg-slate-800 rounded-t-3xl flex flex-col animate-slide-up"
-                style={{ maxHeight: '85dvh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+                className="absolute top-0 left-0 right-0 bottom-0 flex flex-col bg-slate-800"
+                style={{
+                    paddingTop: 'env(safe-area-inset-top, 0px)',
+                    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+                }}
             >
                 <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50 flex-shrink-0">
                     <h2 className="text-lg font-bold text-white">Aggiungi alla Spesa</h2>
