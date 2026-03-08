@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecipes, useDeleteRecipe } from '@/hooks/useRecipes';
 import { Plus, Search, ChefHat, Trash2, Edit2 } from 'lucide-react';
+import LinkifyText from '@/components/LinkifyText';
 
 export default function RecipesPage() {
     const navigate = useNavigate();
@@ -67,7 +68,9 @@ export default function RecipesPage() {
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-white truncate">{recipe.name}</p>
                                 {recipe.instructions && (
-                                    <p className="text-xs text-slate-500 truncate mt-0.5">{recipe.instructions}</p>
+                                    <p className="text-xs text-slate-500 truncate mt-0.5">
+                                        <LinkifyText text={recipe.instructions} />
+                                    </p>
                                 )}
                             </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
