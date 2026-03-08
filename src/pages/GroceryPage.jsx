@@ -111,7 +111,17 @@ export default function GroceryPage() {
     const allCategories = [...categories, ...extraCategories];
 
     const totalItems = allCategories.reduce((sum, cat) => sum + (mergedMap[cat]?.length || 0), 0);
-    const checkedCount = Object.values(checkedItems).filter(Boolean).length;
+
+    // Only count checked items that are still visible in the list
+    const visibleItemKeys = new Set();
+    for (const cat of allCategories) {
+        for (const item of mergedMap[cat] || []) {
+            visibleItemKeys.add(item.isExtra ? `extra-${item.id}` : item.id);
+        }
+    }
+    const checkedCount = Object.keys(checkedItems).filter(
+        (key) => checkedItems[key] && visibleItemKeys.has(key)
+    ).length;
 
     return (
         <div className="max-w-lg mx-auto px-4 pt-4 pb-4 animate-fade-in">
