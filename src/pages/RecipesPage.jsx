@@ -35,7 +35,7 @@ export default function RecipesPage() {
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                     type="text"
-                    placeholder="Cerca ricette..."
+                    placeholder="Cerca per nome o ingrediente..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-slate-700/50 rounded-2xl text-sm text-white placeholder-slate-500 outline-none focus:border-green-500/50 transition-colors"

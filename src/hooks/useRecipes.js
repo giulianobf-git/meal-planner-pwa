@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
-/** Fetch all recipes (shared between users). */
+/** Fetch all recipes (shared between users), searchable by name or ingredient. */
 export function useRecipes(searchTerm = '') {
     const { currentUser } = useAuth();
     const userId = currentUser?.id;
@@ -10,18 +10,26 @@ export function useRecipes(searchTerm = '') {
     return useQuery({
         queryKey: ['recipes', searchTerm],
         queryFn: async () => {
-            let query = supabase
+            const { data, error } = await supabase
                 .from('recipes')
-                .select('id, name, instructions, created_at')
+                .select(`id, name, instructions, created_at,
+                    recipe_ingredients ( ingredients ( name ) )`)
                 .order('name');
 
-            if (searchTerm) {
-                query = query.ilike('name', `%${searchTerm}%`);
-            }
-
-            const { data, error } = await query;
             if (error) throw error;
-            return data || [];
+            if (!data) return [];
+
+            if (!searchTerm) return data;
+
+            const term = searchTerm.toLowerCase();
+            return data.filter((recipe) => {
+                // Match recipe name
+                if (recipe.name.toLowerCase().includes(term)) return true;
+                // Match any ingredient name
+                return recipe.recipe_ingredients?.some((ri) =>
+                    ri.ingredients?.name?.toLowerCase().includes(term)
+                );
+            });
         },
         enabled: Boolean(userId),
     });

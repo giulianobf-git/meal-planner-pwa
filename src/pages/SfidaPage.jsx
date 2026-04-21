@@ -1,8 +1,9 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDailyChecks, useUpsertCheck, getCheckForDay, computeDayPoints, computeWeekPoints } from '@/hooks/useDailyChecks';
 import { useWeeklyResults, useFinalizeWeek, shouldFinalizeWeek, getCurrentMonday, getWeekDatesFromMonday, toLocalDateStr } from '@/hooks/useWeeklyResults';
 import { ArrowLeft, Trophy, Dumbbell, UtensilsCrossed, ChevronLeft, ChevronRight } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 const SNACK_OPTIONS = [
@@ -164,15 +165,50 @@ export default function SfidaPage() {
     const points = useMemo(() => computeWeekPoints(checks), [checks]);
     const todayStr = toLocalDateStr(new Date());
 
-    // Auto-finalize ONLY the current week after Sunday 6PM
+    // Auto-finalize ALL past weeks that have daily checks but no weekly result
+    const hasAutoFinalized = useRef(false);
     useEffect(() => {
-        if (!checksLoading && !resultsLoading && !isFinalized && isCurrentWeek && shouldFinalizeWeek(mondayStr)) {
-            if (checks.length > 0) {
-                const pts = computeWeekPoints(checks);
-                finalizeWeek.mutate({ week_start: mondayStr, g_points: pts.G, l_points: pts.L });
+        if (checksLoading || resultsLoading || hasAutoFinalized.current) return;
+        hasAutoFinalized.current = true;
+
+        const finalizeMissingWeeks = async () => {
+            // Fetch all daily checks to find weeks needing finalization
+            const { data: allChecks, error } = await supabase
+                .from('daily_checks')
+                .select('*')
+                .order('date');
+
+            if (error || !allChecks || allChecks.length === 0) return;
+
+            // Group checks by their week's Monday
+            const weekMap = new Map();
+            for (const check of allChecks) {
+                const d = new Date(check.date + 'T00:00:00');
+                const day = d.getDay();
+                const diff = day === 0 ? -6 : 1 - day;
+                const monday = new Date(d);
+                monday.setDate(d.getDate() + diff);
+                const monStr = toLocalDateStr(monday);
+                if (!weekMap.has(monStr)) weekMap.set(monStr, []);
+                weekMap.get(monStr).push(check);
             }
-        }
-    }, [checksLoading, resultsLoading, isFinalized, isCurrentWeek, mondayStr, checks]);
+
+            // Finalize any past week that should be finalized but isn't
+            for (const [monStr, weekChecks] of weekMap) {
+                const alreadyFinalized = results.find(r => r.week_start === monStr);
+                if (!alreadyFinalized && shouldFinalizeWeek(monStr)) {
+                    const pts = computeWeekPoints(weekChecks);
+                    try {
+                        await finalizeWeek.mutateAsync({ week_start: monStr, g_points: pts.G, l_points: pts.L });
+                    } catch (e) {
+                        console.error('Failed to finalize week', monStr, e);
+                    }
+                }
+            }
+        };
+
+        finalizeMissingWeeks();
+    }, [checksLoading, resultsLoading]);
 
     const handleToggle = (check) => {
         upsertCheck.mutate(check);
