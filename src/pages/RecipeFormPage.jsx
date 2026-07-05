@@ -66,11 +66,21 @@ export default function RecipeFormPage() {
 
     const handleCreateNewIngredient = async () => {
         if (!newIngName.trim()) return;
-        const newIng = await createIngredient.mutateAsync({ name: newIngName.trim(), category: newIngCategory });
-        addIngredient(newIng);
-        setShowNewIngredientModal(false);
-        setNewIngName('');
-        setNewIngCategory('Frutta e verdura');
+        try {
+            const newIng = await createIngredient.mutateAsync({ name: newIngName.trim(), category: newIngCategory });
+            addIngredient(newIng);
+            setShowNewIngredientModal(false);
+            setNewIngName('');
+            setNewIngCategory('Frutta e verdura');
+        } catch (err) {
+            if (err.code === 'DUPLICATE' && err.existingIngredient) {
+                alert(err.message);
+                addIngredient(err.existingIngredient);
+                setShowNewIngredientModal(false);
+                setNewIngName('');
+                setNewIngCategory('Frutta e verdura');
+            }
+        }
     };
 
     const handleSubmit = async () => {

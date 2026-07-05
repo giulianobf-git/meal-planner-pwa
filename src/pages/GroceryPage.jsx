@@ -299,8 +299,14 @@ function ManageIngredientsModal({ onClose }) {
 
     const saveEdit = async () => {
         if (!editName.trim()) return;
-        await updateIngredient.mutateAsync({ id: editingId, name: editName.trim(), category: editCategory });
-        setEditingId(null);
+        try {
+            await updateIngredient.mutateAsync({ id: editingId, name: editName.trim(), category: editCategory });
+            setEditingId(null);
+        } catch (err) {
+            if (err.code === 'DUPLICATE') {
+                alert(err.message);
+            }
+        }
     };
 
     const handleDelete = (ing) => {
@@ -444,12 +450,23 @@ function AddProductModal({ weekStart, onClose, onAdded }) {
 
     const handleCreate = async () => {
         if (!newName.trim()) return;
-        const newIng = await createIngredient.mutateAsync({ name: newName.trim(), category: newCategory });
-        await addExtra.mutateAsync({ ingredientId: newIng.id, weekStart });
-        onAdded(newName.trim());
-        setShowCreate(false);
-        setNewName('');
-        setNewCategory('Utilities home');
+        try {
+            const newIng = await createIngredient.mutateAsync({ name: newName.trim(), category: newCategory });
+            await addExtra.mutateAsync({ ingredientId: newIng.id, weekStart });
+            onAdded(newName.trim());
+            setShowCreate(false);
+            setNewName('');
+            setNewCategory('Utilities home');
+        } catch (err) {
+            if (err.code === 'DUPLICATE' && err.existingIngredient) {
+                alert(err.message);
+                await addExtra.mutateAsync({ ingredientId: err.existingIngredient.id, weekStart });
+                onAdded(err.existingIngredient.name);
+                setShowCreate(false);
+                setNewName('');
+                setNewCategory('Utilities home');
+            }
+        }
     };
 
     return (
