@@ -31,6 +31,7 @@ export default function PlannerPage() {
     const removeMeal = useRemoveMeal();
     const copyPrevWeek = useCopyPreviousWeek();
     const [showBulkModal, setShowBulkModal] = useState(false);
+    const [preselectedRecipe, setPreselectedRecipe] = useState(null);
     const [toast, setToast] = useState(null);
     const hideToast = useCallback(() => setToast(null), []);
 
@@ -175,9 +176,15 @@ export default function PlannerPage() {
                                                 </span>
                                                 {meal ? (
                                                     <div className="flex items-center flex-1 min-w-0 ml-2">
-                                                        <span className="text-sm font-medium text-slate-200 truncate flex-1">
+                                                        <button
+                                                            onClick={() => {
+                                                                setPreselectedRecipe({ id: meal.recipe_id, name: meal.recipes?.name });
+                                                                setShowBulkModal(true);
+                                                            }}
+                                                            className="text-sm font-medium text-slate-200 truncate flex-1 text-left hover:text-green-400 active:text-green-300 transition-colors"
+                                                        >
                                                             {meal.recipes?.name || 'Sconosciuto'}
-                                                        </span>
+                                                        </button>
                                                         <button
                                                             onClick={() => removeMeal.mutate(meal.id)}
                                                             className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors ml-2 flex-shrink-0"
@@ -203,7 +210,11 @@ export default function PlannerPage() {
             {showBulkModal && (
                 <BulkAssignModal
                     weekDates={weekDates}
-                    onClose={() => setShowBulkModal(false)}
+                    preselectedRecipe={preselectedRecipe}
+                    onClose={() => {
+                        setShowBulkModal(false);
+                        setPreselectedRecipe(null);
+                    }}
                 />
             )}
         </div>
