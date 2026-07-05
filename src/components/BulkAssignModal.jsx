@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useBulkAssignMeals } from '@/hooks/useMealPlan';
+import { useState, useMemo } from 'react';
+import { useBulkAssignMeals, useMealPlan } from '@/hooks/useMealPlan';
 import { useRecipes } from '@/hooks/useRecipes';
 import { formatDate, shortDayLabel } from '@/lib/dates';
 import { X, Search, Check, ChefHat } from 'lucide-react';
@@ -10,6 +10,21 @@ export default function BulkAssignModal({ weekDates, onClose, preselectedRecipe 
     const bulkAssign = useBulkAssignMeals();
     const [selectedRecipe, setSelectedRecipe] = useState(preselectedRecipe);
     const [selectedSlots, setSelectedSlots] = useState({});
+    const { data: mealPlan } = useMealPlan(weekDates);
+
+    // Build a set of slot keys where the selected recipe is currently assigned
+    const currentAssignments = useMemo(() => {
+        const set = new Set();
+        if (!mealPlan || !selectedRecipe) return set;
+        for (const [dateStr, slots] of Object.entries(mealPlan)) {
+            for (const [slotType, meal] of Object.entries(slots)) {
+                if (meal && meal.recipe_id === selectedRecipe.id) {
+                    set.add(`${dateStr}|${slotType}`);
+                }
+            }
+        }
+        return set;
+    }, [mealPlan, selectedRecipe]);
 
     const toggleSlot = (date, slot) => {
         const key = `${formatDate(date)}|${slot}`;
@@ -126,14 +141,18 @@ export default function BulkAssignModal({ weekDates, onClose, preselectedRecipe 
                                             {['breakfast', 'lunch', 'dinner'].map((slot) => {
                                                 const key = `${dateStr}|${slot}`;
                                                 const checked = Boolean(selectedSlots[key]);
+                                                const isCurrent = currentAssignments.has(key);
                                                 return (
                                                     <button
                                                         key={key}
-                                                        onClick={() => toggleSlot(date, slot)}
-                                                        className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all ${checked
-                                                            ? 'bg-green-500/20 border border-green-500/60 text-green-400'
-                                                            : 'bg-slate-700/40 border border-slate-500/40 text-slate-400 hover:bg-slate-700/60'
-                                                            }`}
+                                                        onClick={() => !isCurrent && toggleSlot(date, slot)}
+                                                        className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all ${
+                                                            isCurrent
+                                                                ? 'bg-amber-500/20 border border-amber-500/60 text-amber-400 cursor-default'
+                                                                : checked
+                                                                    ? 'bg-green-500/20 border border-green-500/60 text-green-400'
+                                                                    : 'bg-slate-700/40 border border-slate-500/40 text-slate-400 hover:bg-slate-700/60'
+                                                        }`}
                                                     >
                                                         {slot === 'breakfast' ? '🥐 Colaz.' : slot === 'lunch' ? '☀️ Pranzo' : '🌙 Cena'}
                                                     </button>
