@@ -59,13 +59,13 @@ export function useFinalizeWeek() {
 
 /**
  * Check if a week should be finalized.
- * A week is finalizable if current time > that week's Sunday 18:00 (6PM).
+ * A week is finalizable if current time > that week's Sunday 22:00 (10PM).
  */
 export function shouldFinalizeWeek(mondayStr) {
     const monday = new Date(mondayStr + 'T00:00:00');
     const sundayCutoff = new Date(monday);
     sundayCutoff.setDate(monday.getDate() + 6); // Sunday
-    sundayCutoff.setHours(18, 0, 0, 0);
+    sundayCutoff.setHours(22, 0, 0, 0);
     return new Date() > sundayCutoff;
 }
 
