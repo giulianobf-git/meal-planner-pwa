@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useBulkAssignMeals, useMealPlan } from '@/hooks/useMealPlan';
 import { useRecipes } from '@/hooks/useRecipes';
+import { supabase } from '@/lib/supabase';
 import { formatDate, shortDayLabel } from '@/lib/dates';
 import { X, Search, Check, ChefHat } from 'lucide-react';
 
@@ -8,43 +10,100 @@ export default function BulkAssignModal({ weekDates, onClose, preselectedRecipe 
     const [search, setSearch] = useState('');
     const { data: recipes = [] } = useRecipes(search);
     const bulkAssign = useBulkAssignMeals();
+    const queryClient = useQueryClient();
     const [selectedRecipe, setSelectedRecipe] = useState(preselectedRecipe);
     const [selectedSlots, setSelectedSlots] = useState({});
+    const [removedSlots, setRemovedSlots] = useState({});  // tracks deselected current assignments
     const { data: mealPlan } = useMealPlan(weekDates);
+    const initializedRef = useRef(false);
 
-    // Build a set of slot keys where the selected recipe is currently assigned
+    // Build a map of slot keys → meal plan IDs where the selected recipe is currently assigned
     const currentAssignments = useMemo(() => {
-        const set = new Set();
-        if (!mealPlan || !selectedRecipe) return set;
+        const map = {};
+        if (!mealPlan || !selectedRecipe) return map;
         for (const [dateStr, slots] of Object.entries(mealPlan)) {
             for (const [slotType, meal] of Object.entries(slots)) {
                 if (meal && meal.recipe_id === selectedRecipe.id) {
-                    set.add(`${dateStr}|${slotType}`);
+                    map[`${dateStr}|${slotType}`] = meal.id;
                 }
             }
         }
-        return set;
+        return map;
     }, [mealPlan, selectedRecipe]);
+
+    // Pre-populate selectedSlots with current assignments (once, when data loads)
+    useEffect(() => {
+        if (preselectedRecipe && !initializedRef.current && Object.keys(currentAssignments).length > 0) {
+            initializedRef.current = true;
+            const initial = {};
+            for (const key of Object.keys(currentAssignments)) {
+                initial[key] = true;
+            }
+            setSelectedSlots(initial);
+        }
+    }, [preselectedRecipe, currentAssignments]);
 
     const toggleSlot = (date, slot) => {
         const key = `${formatDate(date)}|${slot}`;
-        setSelectedSlots((prev) => {
-            const next = { ...prev };
-            if (next[key]) delete next[key];
-            else next[key] = true;
-            return next;
-        });
+        const isCurrent = key in currentAssignments;
+
+        if (isCurrent) {
+            // Toggle between keeping and removing a current assignment
+            setSelectedSlots((prev) => {
+                const next = { ...prev };
+                if (next[key]) delete next[key];
+                else next[key] = true;
+                return next;
+            });
+            setRemovedSlots((prev) => {
+                const next = { ...prev };
+                if (next[key]) delete next[key];
+                else next[key] = currentAssignments[key]; // store meal plan ID
+                return next;
+            });
+        } else {
+            // Normal toggle for new slots
+            setSelectedSlots((prev) => {
+                const next = { ...prev };
+                if (next[key]) delete next[key];
+                else next[key] = true;
+                return next;
+            });
+        }
     };
 
+    // Compute what changed
+    const newAssignments = Object.keys(selectedSlots).filter(k => !(k in currentAssignments));
+    const removalsCount = Object.keys(removedSlots).length;
+    const hasChanges = newAssignments.length > 0 || removalsCount > 0;
+
     const handleAssign = async () => {
-        if (!selectedRecipe || Object.keys(selectedSlots).length === 0) return;
+        if (!selectedRecipe || !hasChanges) return;
 
-        const assignments = Object.keys(selectedSlots).map((key) => {
-            const [targetDate, slotType] = key.split('|');
-            return { targetDate, slotType };
-        });
+        // 1. Upsert new slot assignments
+        if (newAssignments.length > 0) {
+            const assignments = newAssignments.map((key) => {
+                const [targetDate, slotType] = key.split('|');
+                return { targetDate, slotType };
+            });
+            await bulkAssign.mutateAsync({ recipeId: selectedRecipe.id, assignments });
+        }
 
-        await bulkAssign.mutateAsync({ recipeId: selectedRecipe.id, assignments });
+        // 2. Delete removed current assignments
+        if (removalsCount > 0) {
+            const idsToDelete = Object.values(removedSlots);
+            const { error } = await supabase
+                .from('meal_plan')
+                .delete()
+                .in('id', idsToDelete);
+            if (error) throw error;
+            // bulkAssign already invalidates when called; only need manual invalidation if we only deleted
+            if (newAssignments.length === 0) {
+                queryClient.invalidateQueries({ queryKey: ['mealPlan'] });
+                queryClient.invalidateQueries({ queryKey: ['groceryList'] });
+            }
+        }
+
         onClose();
     };
 
@@ -141,18 +200,29 @@ export default function BulkAssignModal({ weekDates, onClose, preselectedRecipe 
                                             {['breakfast', 'lunch', 'dinner'].map((slot) => {
                                                 const key = `${dateStr}|${slot}`;
                                                 const checked = Boolean(selectedSlots[key]);
-                                                const isCurrent = currentAssignments.has(key);
+                                                const isCurrent = key in currentAssignments;
+                                                const isRemoved = key in removedSlots;
+
+                                                let slotStyle;
+                                                if (isCurrent && !isRemoved) {
+                                                    // Currently assigned, keeping it
+                                                    slotStyle = 'bg-amber-500/20 border border-amber-500/60 text-amber-400';
+                                                } else if (isCurrent && isRemoved) {
+                                                    // Currently assigned, will be removed
+                                                    slotStyle = 'bg-red-500/10 border border-red-500/40 text-red-400 line-through';
+                                                } else if (checked) {
+                                                    // New assignment
+                                                    slotStyle = 'bg-green-500/20 border border-green-500/60 text-green-400';
+                                                } else {
+                                                    // Empty slot
+                                                    slotStyle = 'bg-slate-700/40 border border-slate-500/40 text-slate-400 hover:bg-slate-700/60';
+                                                }
+
                                                 return (
                                                     <button
                                                         key={key}
-                                                        onClick={() => !isCurrent && toggleSlot(date, slot)}
-                                                        className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all ${
-                                                            isCurrent
-                                                                ? 'bg-amber-500/20 border border-amber-500/60 text-amber-400 cursor-default'
-                                                                : checked
-                                                                    ? 'bg-green-500/20 border border-green-500/60 text-green-400'
-                                                                    : 'bg-slate-700/40 border border-slate-500/40 text-slate-400 hover:bg-slate-700/60'
-                                                        }`}
+                                                        onClick={() => toggleSlot(date, slot)}
+                                                        className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all ${slotStyle}`}
                                                     >
                                                         {slot === 'breakfast' ? '🥐 Colaz.' : slot === 'lunch' ? '☀️ Pranzo' : '🌙 Cena'}
                                                     </button>
@@ -170,10 +240,14 @@ export default function BulkAssignModal({ weekDates, onClose, preselectedRecipe 
                 <div className="px-5 py-4 border-t border-slate-700/50 flex-shrink-0">
                     <button
                         onClick={handleAssign}
-                        disabled={!selectedRecipe || Object.keys(selectedSlots).length === 0 || bulkAssign.isPending}
+                        disabled={!selectedRecipe || !hasChanges || bulkAssign.isPending}
                         className="w-full py-3.5 bg-green-500 disabled:bg-slate-700 text-white disabled:text-slate-500 font-bold rounded-2xl transition-all active:scale-[0.98]"
                     >
-                        {bulkAssign.isPending ? 'Salvataggio...' : `Assegna a ${Object.keys(selectedSlots).length} slot`}
+                        {bulkAssign.isPending ? 'Salvataggio...' : (
+                            hasChanges
+                                ? `Conferma${newAssignments.length > 0 ? ` (+${newAssignments.length})` : ''}${removalsCount > 0 ? ` (-${removalsCount})` : ''}`
+                                : 'Nessuna modifica'
+                        )}
                     </button>
                 </div>
             </div>
